@@ -86,11 +86,11 @@ public class Mirage {
 		defaultUrlConnectionFactory = new SimpleUrlConnectionFactory();
 	}
 
-	public static void set(Mirage mirage) {
+	synchronized public static void set(Mirage mirage) {
 		Mirage.mirage = mirage;
 	}
 
-	public static Mirage get(Context context) {
+	synchronized public static Mirage get(Context context) {
 		if (mirage == null) {
 			mirage = new Mirage(context.getApplicationContext());
 			mirage.defaultMemoryCache = new BitmapLruCache(0.25f);
