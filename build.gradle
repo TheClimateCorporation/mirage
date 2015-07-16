@@ -14,7 +14,5 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url 'http://maven.lolay.com' }
-        maven { url 'http://xdeps.ci.climatedna.net/maven'}
     }
 }

@@ -45,9 +45,6 @@ dependencies {
     compile 'com.android.support:support-v13:21.0.0'
     compile 'com.android.support:appcompat-v7:22.1.0'
 
-    // for auth lib
-    compile 'com.climate.android.auth:auth:10' // for authorized load sample
-    compile 'com.google.code.gson:gson:2.3'
     compile 'com.squareup.okhttp:okhttp:2.1.0'
     compile 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
 }
