@@ -1,1 +1,1 @@
-include ':MirageApp', ':MirageLib'
+include ':samples', ':library'

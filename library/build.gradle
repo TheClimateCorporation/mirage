@@ -41,9 +41,9 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:22.2.0'
-    compile 'com.android.support:appcompat-v7:22.2.0' // for the LruCache
-    compile 'com.android.support:support-annotations:20.0.0'
+    compile 'com.android.support:support-v4:22.2.1'
+    compile 'com.android.support:appcompat-v7:22.2.1' // for the LruCache
+    compile 'com.android.support:support-annotations:22.2.1'
 
     testCompile 'com.squareup.okhttp:mockwebserver:2.1.0'
     testCompile 'junit:junit:4.12'
