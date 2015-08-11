@@ -57,7 +57,7 @@ task javadoc(type: Javadoc) {
 }
 
 def coverageSourceDirs = [
-        '../MirageLib/src/main/java'
+        '../library/src/main/java'
 ]
 
 task jacocoTestReport(type:JacocoReport, dependsOn: "testDebug") {
@@ -66,7 +66,7 @@ task jacocoTestReport(type:JacocoReport, dependsOn: "testDebug") {
     description = "Generate Jacoco coverage reports"
 
     classDirectories = fileTree(
-            dir: '../MirageLib/build/intermediates/classes/debug',
+            dir: '../library/build/intermediates/classes/debug',
             excludes: ['**/R.class',
                        '**/R$*.class',
                        '**/*$ViewInjector*.*',
@@ -76,11 +76,10 @@ task jacocoTestReport(type:JacocoReport, dependsOn: "testDebug") {
 
     additionalSourceDirs = files(coverageSourceDirs)
     sourceDirectories = files(coverageSourceDirs)
-    executionData = files('../MirageLib/build/jacoco/testDebug.exec')
+    executionData = files('../library/build/jacoco/testDebug.exec')
 
     reports {
         xml.enabled = true
         html.enabled = true
     }
-
 }
