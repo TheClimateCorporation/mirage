@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.climate.mirage.Mirage;
 import com.climate.mirage.cache.KeyMaker;
@@ -18,6 +19,7 @@ import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.processors.ResizeProcessor;
 import com.climate.mirage.targets.ImageViewTarget;
 import com.climate.mirage.targets.Target;
+import com.climate.mirage.targets.TextViewTarget;
 import com.climate.mirage.tasks.MirageTask;
 
 import java.io.File;
@@ -371,6 +373,18 @@ public class MirageRequest {
 	 */
 	public ImageViewTarget into(ImageView imageView) {
 		return into(new ImageViewTarget(this, imageView));
+	}
+
+    //TODO: make one for just plain View which goes into the setBackground()
+
+	/**
+	 * A convenience method to set the target that the load will go into.
+	 *
+	 * @param textView plain old {@link android.widget.TextView}
+	 * @return the {@link com.climate.mirage.targets.ImageViewTarget} to configure before loading begins
+	 */
+	public TextViewTarget into(TextView textView) {
+		return into(new TextViewTarget(this, textView));
 	}
 
 	/**

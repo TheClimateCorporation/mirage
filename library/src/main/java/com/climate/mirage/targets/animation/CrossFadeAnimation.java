@@ -1,5 +1,6 @@
 package com.climate.mirage.targets.animation;
 
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
@@ -26,7 +27,7 @@ public class CrossFadeAnimation implements MirageAnimation<View> {
 		if (source == Mirage.Source.MEMORY) return false;
 		Drawable currentDrawable = view.getBackground();
 		if (currentDrawable == null) {
-			currentDrawable = new ColorDrawable(android.R.color.transparent);
+			currentDrawable = new ColorDrawable(Color.TRANSPARENT);
 		}
 		Drawable[] fades = new Drawable[2];
 		fades[0] = currentDrawable;

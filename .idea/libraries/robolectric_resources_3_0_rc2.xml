@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="robolectric-resources-3.0-rc2">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/robolectric/robolectric-resources/3.0-rc2/robolectric-resources-3.0-rc2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

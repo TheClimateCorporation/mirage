@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="accessibility-test-framework-1.0">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/android/apps/common/testing/accessibility/framework/accessibility-test-framework/1.0/accessibility-test-framework-1.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
