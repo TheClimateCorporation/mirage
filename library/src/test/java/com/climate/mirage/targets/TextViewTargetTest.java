@@ -2,17 +2,15 @@ package com.climate.mirage.targets;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.R;
 import com.climate.mirage.RoboManifestRunner;
 import com.climate.mirage.requests.MirageRequest;
-import com.climate.mirage.targets.animation.MirageAnimation;
 
 import junit.framework.Assert;
 
@@ -28,7 +26,7 @@ import java.io.IOException;
 public class TextViewTargetTest {
 
     @Test
-    public void testImageViewTarget() {
+    public void testTextViewTarget() {
         TextView textView = new TextView(RuntimeEnvironment.application);
         TextViewTarget target = new TextViewTarget(textView);
         Assert.assertNotNull(target.getView());
@@ -40,30 +38,196 @@ public class TextViewTargetTest {
     }
 
     @Test
-    public void testLifecycle() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
+    public void testLifecycle_onPrepare() {
+        // LEFT
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
+        target.location(TextViewTarget.LEFT);
         target.placeHolder(new ColorDrawable(Color.RED));
-        target.error(new ColorDrawable(Color.BLUE));
 
         target.onPreparingLoad();
-        Assert.assertNotNull(imageView.getDrawable());
-        Assert.assertSame(target.getPlaceHolderDrawable(), imageView.getDrawable());
+        Assert.assertNotNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getPlaceHolderDrawable(), textView.getCompoundDrawables()[0]);
+
+        // TOP
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.TOP);
+        target.placeHolder(new ColorDrawable(Color.RED));
+
+        target.onPreparingLoad();
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNotNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getPlaceHolderDrawable(), textView.getCompoundDrawables()[1]);
+
+        // RIGHT
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.RIGHT);
+        target.placeHolder(new ColorDrawable(Color.RED));
+
+        target.onPreparingLoad();
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNotNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getPlaceHolderDrawable(), textView.getCompoundDrawables()[2]);
+
+        // BOTTOM
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.BOTTOM);
+        target.placeHolder(new ColorDrawable(Color.RED));
+
+        target.onPreparingLoad();
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNotNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getPlaceHolderDrawable(), textView.getCompoundDrawables()[3]);
+
+        // TOP - null holders
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.TOP);
+
+        target.onPreparingLoad();
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertNull(target.getPlaceHolderDrawable());
+    }
+
+    @Test
+    public void testLifecycle_onError() {
+        // LEFT
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
+        target.location(TextViewTarget.LEFT);
+        target.error(new ColorDrawable(Color.BLUE));
 
         target.onError(new IOException("test io"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertSame(target.getErrorDrawable(), imageView.getDrawable());
+        Assert.assertNotNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getErrorDrawable(), textView.getCompoundDrawables()[0]);
 
-        imageView.setImageDrawable(null);
-        Assert.assertNull(imageView.getDrawable());
-        target.onResult(Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888),
-                Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
+        // TOP
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.TOP);
+        target.error(new ColorDrawable(Color.BLUE));
+
+        target.onError(new IOException("test io"), Mirage.Source.EXTERNAL, new MirageRequest());
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNotNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getErrorDrawable(), textView.getCompoundDrawables()[1]);
+
+        // RIGHT
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.RIGHT);
+        target.error(new ColorDrawable(Color.BLUE));
+
+        target.onError(new IOException("test io"), Mirage.Source.EXTERNAL, new MirageRequest());
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNotNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getErrorDrawable(), textView.getCompoundDrawables()[2]);
+
+        // BOTTOM
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.BOTTOM);
+        target.error(new ColorDrawable(Color.BLUE));
+
+        target.onError(new IOException("test io"), Mirage.Source.EXTERNAL, new MirageRequest());
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNotNull(textView.getCompoundDrawables()[3]);
+        Assert.assertSame(target.getErrorDrawable(), textView.getCompoundDrawables()[3]);
+
+        // TOP - null holders
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.location(TextViewTarget.TOP);
+
+        target.onError(new IOException("test io"), Mirage.Source.EXTERNAL, new MirageRequest());
+        Assert.assertNull(textView.getCompoundDrawables()[0]);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
+        Assert.assertNull(target.getPlaceHolderDrawable());
+    }
+
+    @Test
+    public void testBounds() {
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
+        target.placeHolder(new ColorDrawable(Color.RED));
+        target.error(new ColorDrawable(Color.BLUE));
+        target.location(TextViewTarget.LEFT);
+        target.bounds(0, 0, 80, 80);
+        target.onPreparingLoad();
+
+        Assert.assertEquals(new Rect(0, 0, 80, 80), textView.getCompoundDrawables()[0].getBounds());
+    }
+
+    @Test
+    public void testBounds_unset() {
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
+        target.placeHolder(new ColorDrawable(Color.RED));
+        target.location(TextViewTarget.LEFT);
+        target.onPreparingLoad();
+
+        Assert.assertTrue(textView.getCompoundDrawables()[0].getBounds().isEmpty());
+        Assert.assertEquals(-1, textView.getCompoundDrawables()[0].getIntrinsicWidth());
+        Assert.assertEquals(-1, textView.getCompoundDrawables()[0].getIntrinsicHeight());
+
+        textView = new TextView(RuntimeEnvironment.application);
+        target = new TextViewTarget(textView);
+        target.placeHolder(new BitmapDrawable(
+                RuntimeEnvironment.application.getResources(),
+                Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)));
+        target.location(TextViewTarget.LEFT);
+        target.onPreparingLoad();
+
+        Assert.assertEquals(400, textView.getCompoundDrawables()[0].getIntrinsicWidth());
+        Assert.assertEquals(300, textView.getCompoundDrawables()[0].getIntrinsicHeight());
+    }
+
+    @Test
+    public void testBounds_setOnIntrinisic() {
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
+        target.placeHolder(new BitmapDrawable(
+                RuntimeEnvironment.application.getResources(),
+                Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)));
+        target.location(TextViewTarget.LEFT);
+        target.bounds(0, 0, 40, 30);
+        target.onPreparingLoad();
+
+        Assert.assertEquals(new Rect(0, 0, 40, 30), textView.getCompoundDrawables()[0].getBounds());
+        Assert.assertEquals(400, textView.getCompoundDrawables()[0].getIntrinsicWidth());
+        Assert.assertEquals(300, textView.getCompoundDrawables()[0].getIntrinsicHeight());
     }
 
     @Test
     public void testFadeCreatesAnimation() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
         target.placeHolder(new ColorDrawable(Color.RED));
         target.error(new ColorDrawable(Color.BLUE));
         Assert.assertNull(target.animation());
@@ -72,206 +236,23 @@ public class TextViewTargetTest {
     }
 
     @Test
-    public void testDrawableChoices() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        target.getPlaceHolderDrawable();
-
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(R.drawable.abc_btn_radio_material);
-        target.getPlaceHolderDrawable();
-
-        target = new ImageViewTarget(imageView);
-        target.error(new ColorDrawable(Color.RED));
-        target.getErrorDrawable();
-
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(R.drawable.abc_btn_radio_material);
-        target.getPlaceHolderDrawable();
-
-        // define both kinds of drawable should be an error
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        try {
-            target.placeHolder(R.drawable.abc_btn_radio_material);
-            Assert.fail("Can only allow 1 type of drawable");
-        } catch (IllegalStateException e) {
-            Assert.assertNotNull(e);
-        }
-
-        // define both kinds of drawable should be an error
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(R.drawable.abc_btn_radio_material);
-        try {
-            target.placeHolder(new ColorDrawable(Color.BLUE));
-            Assert.fail("Can only allow 1 type of drawable");
-        } catch (IllegalStateException e) {
-            Assert.assertNotNull(e);
-        }
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(new ColorDrawable(Color.BLUE));
-        try {
-            target.error(R.drawable.abc_btn_radio_material);
-            Assert.fail("Can only allow 1 type of drawable");
-        } catch (IllegalStateException e) {
-            Assert.assertNotNull(e);
-        }
-
-        // define both kinds of drawable should be an error
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(R.drawable.abc_btn_radio_material);
-        try {
-            target.error(new ColorDrawable(Color.BLUE));
-            Assert.fail("Can only allow 1 type of drawable");
-        } catch (IllegalStateException e) {
-            Assert.assertNotNull(e);
-        }
-    }
-
-    @Test
-    public void testOnPrepareChoices() {
-        // a drawable
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        target.onPreparingLoad();
-        Assert.assertNotNull(imageView.getDrawable());
-
-        // a resource id
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(R.drawable.abc_btn_radio_material);
-        target.onPreparingLoad();
-        Assert.assertNotNull(imageView.getDrawable());
-
-        // no drawable given
-        target = new ImageViewTarget(imageView);
-        Assert.assertNull(target.getPlaceHolderDrawable());
-        target.onPreparingLoad();
-        Assert.assertNull(imageView.getDrawable());
-    }
-
-    @Test
     public void testOnResult() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
+        TextView textView = new TextView(RuntimeEnvironment.application);
+        TextViewTarget target = new TextViewTarget(textView);
+        target.location(TextViewTarget.LEFT);
+        target.bounds(0, 0, 300, 200);
         target.placeHolder(new ColorDrawable(Color.BLUE));
         target.onPreparingLoad();
-        target.onResult(Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888),
+        target.onResult(Bitmap.createBitmap(300, 200, Bitmap.Config.ARGB_8888),
                 Mirage.Source.EXTERNAL, new MirageRequest());
 
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        target.fade();
-        target.onPreparingLoad();
-        target.onResult(Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888),
-                Mirage.Source.EXTERNAL, new MirageRequest());
+        Assert.assertEquals(new Rect(0, 0, 300, 200), textView.getCompoundDrawables()[0].getBounds());
+        Assert.assertEquals(300, textView.getCompoundDrawables()[0].getIntrinsicWidth());
+        Assert.assertEquals(200, textView.getCompoundDrawables()[0].getIntrinsicHeight());
+        Assert.assertTrue(textView.getCompoundDrawables()[0] instanceof BitmapDrawable);
+        Assert.assertNull(textView.getCompoundDrawables()[1]);
+        Assert.assertNull(textView.getCompoundDrawables()[2]);
+        Assert.assertNull(textView.getCompoundDrawables()[3]);
     }
-
-    @Test
-    public void testOnResultWithCustomAnimation() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        target.onPreparingLoad();
-        target.onResult(Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888),
-                Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-
-        //test animation doesnt set the drawable
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        target.animation(new MirageAnimation<ImageView>() {
-            @Override
-            public boolean animate(ImageView view, Drawable drawable, Mirage.Source source) {
-                return false;
-            }
-        });
-        target.onPreparingLoad();
-        target.onResult(Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888),
-                Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-
-        // test animation sets the drawable
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.placeHolder(new ColorDrawable(Color.BLUE));
-        target.animation(new MirageAnimation<ImageView>() {
-            @Override
-            public boolean animate(ImageView view, Drawable drawable, Mirage.Source source) {
-                view.setImageDrawable(drawable);
-                return true;
-            }
-        });
-        target.onPreparingLoad();
-        target.onResult(Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888),
-                Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-    }
-
-    @Test
-    public void testOnError() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNull(imageView.getDrawable());
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(R.drawable.abc_btn_check_material);
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(new ColorDrawable(Color.RED));
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-    }
-
-    @Test
-    public void testOnErrorWithAnimations() {
-        ImageView imageView = new ImageView(RuntimeEnvironment.application);
-        ImageViewTarget target = new ImageViewTarget(imageView);
-        target.fade();
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNull(imageView.getDrawable());
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(R.drawable.abc_btn_check_material);
-        target.fade();
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(new ColorDrawable(Color.RED));
-        target.fade();
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-
-        imageView = new ImageView(RuntimeEnvironment.application);
-        target = new ImageViewTarget(imageView);
-        target.error(new ColorDrawable(Color.RED));
-        target.animation(new MirageAnimation<ImageView>() {
-            @Override
-            public boolean animate(ImageView view, Drawable drawable, Mirage.Source source) {
-                view.setImageDrawable(drawable);
-                return false;
-            }
-        });
-        target.onError(new IOException("test exc"), Mirage.Source.EXTERNAL, new MirageRequest());
-        Assert.assertNotNull(imageView.getDrawable());
-    }
-
 
 }
