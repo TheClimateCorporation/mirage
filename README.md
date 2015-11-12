@@ -26,7 +26,7 @@ dependencies {
 
 Examples
 --------
-There are several examples in the "MirageApp" folder to check out and run.
+There are several examples in the “samples” folder to check out and run.
 The general idea is this
 
 ```Java
@@ -94,7 +94,7 @@ Coverage Reports
 --------
 To run coverage reports do:
 ```
-./gradlew clean :MirageLib:jacocoTestReport
+./gradlew clean :library:jacocoTestReport
 ```
 
 
