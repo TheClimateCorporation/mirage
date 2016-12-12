@@ -26,6 +26,7 @@
 
         <activity android:label="Simple Load Example" android:name=".SimpleLoadActivity" />
         <activity android:label="Simple List" android:name=".ListActivity" />
+        <activity android:label="Drawable Load" android:name=".DrawableLoadActivity" />
         <activity android:label="TextView Drawable Sample" android:name=".TextViewActivity" />
         <activity android:label="Custom Drawable" android:name=".CustomDrawableActivity" />
         <activity android:label="Load and Cancel" android:name=".LoadAndCancelActivity" />
