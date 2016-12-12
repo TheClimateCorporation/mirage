@@ -1,11 +1,13 @@
 package com.climate.mirage;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.os.NetworkOnMainThreadException;
+import android.support.annotation.AnyRes;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -35,6 +37,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
+
+import static android.content.ContentResolver.SCHEME_ANDROID_RESOURCE;
+import static android.content.ContentResolver.SCHEME_CONTENT;
+import static android.content.ContentResolver.SCHEME_FILE;
 
 /**
  * Mirage is an image loading and caching system. In addition to convenience to basic loading,
@@ -119,7 +125,8 @@ public class Mirage {
 	 */
 	public MirageRequest load(Uri uri) {
 		MirageRequest r = requestObjectPool.getObject();
-		if (uri.getScheme().startsWith("file")) {
+		if (uri.getScheme().startsWith(SCHEME_FILE) ||
+                uri.getScheme().startsWith(SCHEME_ANDROID_RESOURCE) ) {
 			r.diskCacheStrategy(DiskCacheStrategy.RESULT);
 		}
 		return r.mirage(this).uri(uri);
@@ -128,6 +135,21 @@ public class Mirage {
 	public MirageRequest load(File file) {
 		return load(Uri.fromFile(file));
 	}
+
+
+    /**
+     * Method for loading from the drawables folders
+     * @param resId
+     * @return
+     */
+	public MirageRequest load(@AnyRes int resId) {
+        Resources res = applicationContext.getResources();
+        Uri uri = Uri.parse(SCHEME_ANDROID_RESOURCE +
+                "://" + res.getResourcePackageName(resId)
+                + '/' + res.getResourceTypeName(resId)
+                + '/' + res.getResourceEntryName(resId));
+        return load(uri);
+    }
 
 	/**
 	 * Fires off the loading asynchronous. Mostly likely you will not access this directly
@@ -176,9 +198,10 @@ public class Mirage {
 		}
 
 		MirageTask<Void, Void, Bitmap> task;
-		if (request.uri().getScheme().startsWith("file")) {
+		if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
 			task = new BitmapFileTask(this, request, loadErrorManager, bitmapUrlTaskCallback);
-		} else if (request.uri().getScheme().startsWith("content")) {
+		} else if (request.uri().getScheme().startsWith(SCHEME_CONTENT) ||
+                request.uri().getScheme().startsWith(SCHEME_ANDROID_RESOURCE)) {
 			task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, bitmapUrlTaskCallback);
 		} else {
 			task = new BitmapUrlTask(this, request, loadErrorManager, bitmapUrlTaskCallback);
