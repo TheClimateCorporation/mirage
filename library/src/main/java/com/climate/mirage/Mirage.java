@@ -93,7 +93,7 @@ public class Mirage {
 
 	public Mirage(Context applicationContext) {
 		this.applicationContext = applicationContext.getApplicationContext();
-        ((Application)applicationContext).registerActivityLifecycleCallbacks(activityLifecycles = new ActivityLifecycleStub() {
+        ((Application)this.applicationContext).registerActivityLifecycleCallbacks(activityLifecycles = new ActivityLifecycleStub() {
             @Override
             public void onActivityDestroyed(Activity activity) {
                 Iterator<Map.Entry<Object, MirageTask>> it = runningRequests.entrySet().iterator();
@@ -226,6 +226,13 @@ public class Mirage {
         return task;
     }
 
+    /**
+     * Runs the go task.
+     *
+     * @param task the mirage task
+     * @param request the configured request for the resource to load
+     * @return The AsyncTask responsible for running the request. It could be null if the resource is in the memory cache
+     */
 	public MirageTask<Void, Void, Bitmap> executeGoTask(MirageTask<Void, Void, Bitmap> task, MirageRequest request) {
         if (task.isCancelled()) {
             return null;
