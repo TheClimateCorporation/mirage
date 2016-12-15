@@ -196,5 +196,12 @@ public class MirageRequestTest {
         request.resize(200, 200, ResizeProcessor.STRATEGY_SCALE_FREE);
     }
 
+    @Test
+    public void testResampleInput() {
+        MirageRequest request = new MirageRequest();
+        request.dynamicResample(400);
+        Assert.assertEquals(400, request.getResizeTargetDimen());
+    }
+
 
 }

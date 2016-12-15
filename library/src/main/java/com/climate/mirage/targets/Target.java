@@ -43,4 +43,10 @@ public interface Target<Result> {
 	 */
 	public void onError(Exception e, Mirage.Source source, MirageRequest request);
 
+
+    /**
+     * Called if the loading task has been canceled. Targets can do any clean up here.
+     */
+    public void onCancel();
+
 }

@@ -64,6 +64,8 @@ public class MirageRequest {
 	private UrlFactory urlFactory;
 	private List<BitmapProcessor> processors;
 	private ResizeProcessor resizeProcessor;
+    private int resizeTargetDimen = -1;
+    private boolean resizeSampleUndershoot = false;
 
 
 	/**
@@ -92,6 +94,8 @@ public class MirageRequest {
 		diskCacheStrategy = DiskCacheStrategy.RESULT;
 		keyMaker = defaultKeymaker;
 		urlFactory = null;
+        resizeTargetDimen = -1;
+        resizeSampleUndershoot = false;
 		if (processors != null) {
 			processors.clear();
 		}
@@ -215,7 +219,7 @@ public class MirageRequest {
 	 * @return class instance to daisy chain
 	 */
 	public MirageRequest resize(int width, int height) {
-		return resize(width, height, ResizeProcessor.STRATEGY_RATIO_FREE);
+		return resize(width, height, ResizeProcessor.STRATEGY_RATIO_MAINTAINED);
 	}
 
 	/**
@@ -225,7 +229,8 @@ public class MirageRequest {
 	 *
 	 * @param width width the new bitmap should be
 	 * @param height height the new bitmap should be
-	 * @param strategy defines how the resize should take place. Is one of the constants above
+	 * @param strategy defines how the resize should take place. Is one of the constants from
+     *                 {@link ResizeProcessor}
 	 *                 and can combined like <code>STRATEGY_SCALE_DOWN_ONLY | STRATEGY_RATIO_MAINTAINED</code>
 	 * @return class instance to daisy chain
 	 */
@@ -275,6 +280,45 @@ public class MirageRequest {
 		BitmapFactory.Options opts = new BitmapFactory.Options();
 		opts.inSampleSize = sampleSize;
 		return options(opts, null);
+	}
+
+    /**
+     * Method to dynamically adjust the inSampleSize based upon the read dimension of the InputStream.
+     * When this method is called and the images aren't in memory cache or result cache,
+     * it causes the load system to do a double pass. The first pass
+     * is to decode only the bounds of the image. The next pass dynamically sets the
+     * {@link android.graphics.BitmapFactory.Options#inSampleSize} and loads the image again.
+     *
+     * The width and height params here are only estimates as inSampleSize only allows the image
+     * to scale in powers of 2, it can not produce an exact size. If an exact size is needed, also
+     * call {@link #resize(int, int)} which runs in memory
+     *
+     * @param resizeTargetDimen the desired (non exact) length of the greatest side of the image.
+     *                          So if the image is 2000x1000, the targetMaxSideSize will match up
+     *                          to 2000.
+     * @param isUndershootSizes true if the inSampleSize should err on the size on making the images smaller.
+     * @return class instance to daisy chain
+     */
+	public MirageRequest dynamicResample(int resizeTargetDimen, boolean isUndershootSizes) {
+        this.resizeTargetDimen = resizeTargetDimen;
+        this.resizeSampleUndershoot = isUndershootSizes;
+        return this;
+    }
+
+	public MirageRequest dynamicResample(int resizeTargetDimen) {
+        return dynamicResample(resizeTargetDimen, false);
+	}
+
+    public boolean isInSampleSizeDynamic() {
+        return resizeTargetDimen > 0;
+    }
+
+	public int getResizeTargetDimen() {
+		return resizeTargetDimen;
+	}
+
+	public boolean isResizeSampleUndershoot() {
+		return resizeSampleUndershoot;
 	}
 
 	public BitmapFactory.Options options() {
@@ -375,7 +419,7 @@ public class MirageRequest {
 		return into(new ImageViewTarget(this, imageView));
 	}
 
-    //TODO: make one for just plain View which goes into the setBackground()
+    // TODO: make one for just plain View which goes into the setBackground()
 
 	/**
 	 * A convenience method to set the target that the load will go into.
@@ -407,6 +451,16 @@ public class MirageRequest {
 		if (mirage == null) throw new IllegalStateException("Must set a mirage instance before calling goSync");
 		return mirage.goSync(this);
 	}
+
+	public MirageTask<Void, Void, Bitmap> createGoTask() {
+        if (mirage == null) throw new IllegalStateException("Must set a mirage instance before calling createGoTask");
+        return mirage.createGoTask(this);
+	}
+
+    public void executeGoTask(MirageTask<Void, Void, Bitmap> task) {
+        if (mirage == null) throw new IllegalStateException("Must set a mirage instance before calling executeGoTask");
+        mirage.executeGoTask(task, this);
+    }
 
 	/**
 	 * Downloads the image only to file. The image is not read into memory
@@ -484,6 +538,5 @@ public class MirageRequest {
 				|| getSourceKey().equals(getResultKey())
 				&& diskCache() != null);
 	}
-
 
 }

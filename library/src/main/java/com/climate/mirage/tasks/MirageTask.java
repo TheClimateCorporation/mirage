@@ -19,6 +19,7 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 	private Exception exception; // out of memory exceptions and NPE
 	private Callback<Result> callback;
 	private MirageRequest request;
+    private boolean didInternalCancel = false;
 
 
 	public MirageTask(MirageRequest request, Callback<Result> callback) {
@@ -26,7 +27,7 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 		this.callback = callback;
 	}
 
-	@Override
+    @Override
 	protected Result doInBackground(Params... params) {
 		try {
 			return doTask(params);
@@ -41,10 +42,25 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 		}
 	}
 
+    /**
+     * A call to this will ensure that the cancel calls happen
+     * even if the task hasn't been executed yet. The code always
+     * needs the cancel callbacks because our targets must be notified
+     */
+    public void mirageCancel() {
+        // if the task is already running, let the onCancel call it
+        // so we dont object pool recycle the request object in the
+        // middle of doing working still
+        if (getStatus() != Status.RUNNING) {
+            internalCancel();
+        }
+        cancel(true);
+    }
+
 	@Override
 	protected void onCancelled(Result result) {
 		super.onCancelled(result);
-		callback.onCancel(this, request);
+        internalCancel();
 	}
 
 	@Override
@@ -63,4 +79,11 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 
 	abstract protected void onPostSuccess(Result bitmap);
 	abstract protected void onPostError(Exception exception);
+
+    private void internalCancel() {
+        if (didInternalCancel) return;
+        didInternalCancel = true;
+        if (request.target() != null) request.target().onCancel();
+        callback.onCancel(this, request);
+    }
 }

@@ -37,6 +37,8 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 		this.loadErrorManager = loadErrorManager;
 	}
 
+	// FIXME: This file needs to respect the dynamicResize option now
+	// FIXME: Is it possible to consolidate any of this logic? It's so dang gone custom
 	@Override
 	public File doTask(Void... params) throws MirageIOException {
 		// check to see if we have the source or the processed version in our disk cache

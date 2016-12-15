@@ -22,4 +22,8 @@ public class LogTarget<Result> implements Target<Result> {
 		Log.d("LogTarget", "/onError()");
 	}
 
+	@Override
+	public void onCancel() {
+		Log.d("LogTarget", "/onCancel()");
+	}
 }
