@@ -1,10 +1,9 @@
 package com.climate.mirage.app;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -49,9 +48,11 @@ public class ListActivity extends AppCompatActivity {
 	private class MyAdapter extends BaseAdapter {
 
 		private ArrayList<String> items;
+        private LayoutInflater inflater;
 
 		public MyAdapter(Context context, ArrayList<String> items) {
 			this.items = items;
+            inflater = LayoutInflater.from(context);
 		}
 
 		@Override
@@ -73,14 +74,11 @@ public class ListActivity extends AppCompatActivity {
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ImageView iv;
 			if (convertView == null) {
-				iv = new ImageView(ListActivity.this);
-                ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(
-                        toPx(250), toPx(250)
-                );
-                iv.setLayoutParams(lp);
-				iv.setAdjustViewBounds(true);
+                convertView = inflater.inflate(R.layout.list_item_type1, parent, false);
+                iv = (ImageView)convertView.findViewById(R.id.imageView);
+                convertView.setTag(iv);
 			} else {
-				iv = (ImageView)convertView;
+				iv = (ImageView)convertView.getTag();
 			}
 
 			Mirage.get(ListActivity.this)
@@ -92,13 +90,7 @@ public class ListActivity extends AppCompatActivity {
 					.fade()
 					.go();
 
-			return iv;
+			return convertView;
 		}
 	}
-
-	private int toPx(int dp) {
-        Resources r = getResources();
-        float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics());
-        return (int)px;
-    }
 }
