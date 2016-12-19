@@ -4,7 +4,6 @@ public final class MathUtils {
 
     private MathUtils() {}
 
-    // FIXME: add unit tests
     public static int upperPowerof2(int v) {
         v--;
         v |= v >> 1;
