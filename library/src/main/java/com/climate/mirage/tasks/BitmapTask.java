@@ -155,11 +155,10 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		return !isCancelled() ? bitmap : null;
 	}
 
-	// FIXME: this probably doesn't handle if the desered size is larger than the
-	// server size. It might go negative. Fix this
     private int determineSampleSize(BitmapFactory.Options outOpts) {
         int dimen = Math.max(outOpts.outWidth, outOpts.outHeight);
         float div = dimen / (float)request.getResizeTargetDimen();
+		if (div < 1) return 1;
         if (request.isResizeSampleUndershoot()) {
             int sampleSize = MathUtils.upperPowerof2((int)div);
             return sampleSize;
