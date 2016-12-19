@@ -93,27 +93,27 @@ public class Mirage {
 
 	public Mirage(Context applicationContext) {
 		this.applicationContext = applicationContext.getApplicationContext();
-        ((Application)this.applicationContext).registerActivityLifecycleCallbacks(activityLifecycles = new ActivityLifecycleStub() {
-            @Override
-            public void onActivityDestroyed(Activity activity) {
-                Iterator<Map.Entry<Object, MirageTask>> it = runningRequests.entrySet().iterator();
-                while (it.hasNext()) {
-                    Map.Entry<Object, MirageTask> item = it.next();
-                    if (item.getKey() instanceof View) {
-                        Context context = ((View)item.getKey()).getContext();
-                        if (activity == context) {
-                            it.remove();
-                            MirageTask task = item.getValue();
-                            if (task != null) task.mirageCancel();
-                        }
-                    }
-                }
-            }
-        });
 		requestObjectPool = new ObjectPool<>(new MirageRequestFactory(), 50);
 		loadErrorManager = new LoadErrorManager();
 		runningRequests = Collections.synchronizedMap(new HashMap<Object, MirageTask>());
 		defaultUrlConnectionFactory = new SimpleUrlConnectionFactory();
+		((Application)this.applicationContext).registerActivityLifecycleCallbacks(activityLifecycles = new ActivityLifecycleStub() {
+			@Override
+			public void onActivityDestroyed(Activity activity) {
+				Iterator<Map.Entry<Object, MirageTask>> it = runningRequests.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Object, MirageTask> item = it.next();
+					if (item.getKey() instanceof View) {
+						Context context = ((View)item.getKey()).getContext();
+						if (activity == context) {
+							it.remove();
+							MirageTask task = item.getValue();
+							if (task != null) task.mirageCancel();
+						}
+					}
+				}
+			}
+		});
 	}
 
 	synchronized public static void set(Mirage mirage) {
