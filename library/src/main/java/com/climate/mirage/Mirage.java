@@ -1,5 +1,7 @@
 package com.climate.mirage;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -8,6 +10,8 @@ import android.os.AsyncTask;
 import android.os.Looper;
 import android.os.NetworkOnMainThreadException;
 import android.support.annotation.AnyRes;
+import android.support.annotation.MainThread;
+import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -29,12 +33,14 @@ import com.climate.mirage.tasks.BitmapFileTask;
 import com.climate.mirage.tasks.BitmapUrlTask;
 import com.climate.mirage.tasks.MirageExecutor;
 import com.climate.mirage.tasks.MirageTask;
+import com.climate.mirage.utils.ActivityLifecycleStub;
 import com.climate.mirage.utils.ObjectFactory;
 import com.climate.mirage.utils.ObjectPool;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
@@ -83,6 +89,7 @@ public class Mirage {
 	private LoadErrorManager loadErrorManager;
 	private ObjectPool<MirageRequest> requestObjectPool;
 	private Context applicationContext;
+    private ActivityLifecycleStub activityLifecycles;
 
 	public Mirage(Context applicationContext) {
 		this.applicationContext = applicationContext.getApplicationContext();
@@ -90,6 +97,23 @@ public class Mirage {
 		loadErrorManager = new LoadErrorManager();
 		runningRequests = Collections.synchronizedMap(new HashMap<Object, MirageTask>());
 		defaultUrlConnectionFactory = new SimpleUrlConnectionFactory();
+		((Application)this.applicationContext).registerActivityLifecycleCallbacks(activityLifecycles = new ActivityLifecycleStub() {
+			@Override
+			public void onActivityDestroyed(Activity activity) {
+				Iterator<Map.Entry<Object, MirageTask>> it = runningRequests.entrySet().iterator();
+				while (it.hasNext()) {
+					Map.Entry<Object, MirageTask> item = it.next();
+					if (item.getKey() instanceof View) {
+						Context context = ((View)item.getKey()).getContext();
+						if (activity == context) {
+							it.remove();
+							MirageTask task = item.getValue();
+							if (task != null) task.mirageCancel();
+						}
+					}
+				}
+			}
+		});
 	}
 
 	synchronized public static void set(Mirage mirage) {
@@ -108,6 +132,21 @@ public class Mirage {
 		}
 		return mirage;
 	}
+
+    /**
+     * If you create a mirage instance directly, call this to cancel all pending tasks
+     * and to release application resources.
+     */
+    public void dispose() {
+        ((Application)applicationContext).unregisterActivityLifecycleCallbacks(activityLifecycles);
+        Iterator<Map.Entry<Object, MirageTask>> it = runningRequests.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Object, MirageTask> item = it.next();
+            it.remove();
+            MirageTask task = item.getValue();
+            if (task != null) task.mirageCancel();
+        }
+    }
 
 	public MirageRequest load(String uri) {
 		return load(Uri.parse(uri));
@@ -159,59 +198,94 @@ public class Mirage {
 	 * @param request the configured request for the resource to load
 	 * @return The AsyncTask responsible for running the request. It could be null if the resource is in the memory cache
 	 */
+    @MainThread
 	public MirageTask go(MirageRequest request) {
-		if (request.memoryCache() == null) request.memoryCache(defaultMemoryCache);
-		if (request.diskCache() == null) request.diskCache(defaultDiskCache);
-		if (request.executor() == null) request.executor(defaultExecutor);
-		if (request.urlFactory() == null) request.urlFactory(defaultUrlConnectionFactory);
-
-		// if there's a previous request for this view or target, cancel it.
-		cancelRequest(request.target());
-
-		// if the url is blank, fault out immediately
-		if (request.uri() == null || TextUtils.isEmpty(request.uri().toString())) {
-			if (request.target() != null) request.target().onError(
-					new IllegalArgumentException("Uri is null"), Source.MEMORY,
-					request);
-			return null;
-		}
-
-		Bitmap resource = null;
-
-		// Check immediately if the resource is in the memory cache
-		MemoryCache<String, Bitmap> memCache = request.memoryCache();
-		if (memCache != null) {
-			resource = memCache.get(request.getResultKey());
-			if (resource != null) {
-				if (request.target() != null) request.target().onResult(resource,
-						Source.MEMORY, request);
-				return null;
-			}
-		}
-
-		// Check immediately if the resource is in the error cache
-		LoadError error = getLoadError(request.uri());
-		if (error != null && error.isValid()) {
-			if (request.target() != null) request.target().onError(error.getException(),
-					Source.MEMORY, request);
-			return null;
-		}
-
-		MirageTask<Void, Void, Bitmap> task;
-		if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
-			task = new BitmapFileTask(this, request, loadErrorManager, bitmapUrlTaskCallback);
-		} else if (request.uri().getScheme().startsWith(SCHEME_CONTENT) ||
-                request.uri().getScheme().startsWith(SCHEME_ANDROID_RESOURCE)) {
-			task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, bitmapUrlTaskCallback);
-		} else {
-			task = new BitmapUrlTask(this, request, loadErrorManager, bitmapUrlTaskCallback);
-		}
-		Executor executor = request.executor();
-		addRequestToList(request, task);
-		if (request.target() != null) request.target().onPreparingLoad();
-		task.executeOnExecutor(executor);
-		return task;
+		MirageTask<Void, Void, Bitmap> task = createGoTask(request);
+        return executeGoTask(task, request);
 	}
+
+    /**
+     * Creates the go task that Mirage will run without actually running it yet.
+
+     * @param request the configured request for the resource to load.
+     * @return
+     */
+    public MirageTask<Void, Void, Bitmap> createGoTask(MirageRequest request) {
+        cancelRequest(request.target());
+
+        // if the url is blank, fault out immediately
+        if (request.uri() == null || TextUtils.isEmpty(request.uri().toString())) {
+            if (request.target() != null) request.target().onError(
+                    new IllegalArgumentException("Uri is null"), Source.MEMORY,
+                    request);
+            return null;
+        }
+
+        MirageTask<Void, Void, Bitmap> task;
+        if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
+            task = new BitmapFileTask(this, request, loadErrorManager, bitmapGoTaskCallback);
+        } else if (request.uri().getScheme().startsWith(SCHEME_CONTENT) ||
+                request.uri().getScheme().startsWith(SCHEME_ANDROID_RESOURCE)) {
+            task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, bitmapGoTaskCallback);
+        } else {
+            task = new BitmapUrlTask(this, request, loadErrorManager, bitmapGoTaskCallback);
+        }
+        addRequestToList(request, task);
+        return task;
+    }
+
+    /**
+     * Runs the go task.
+     *
+     * @param task the mirage task
+     * @param request the configured request for the resource to load
+     * @return The AsyncTask responsible for running the request. It could be null if the resource is in the memory cache
+     */
+	public MirageTask<Void, Void, Bitmap> executeGoTask(MirageTask<Void, Void, Bitmap> task, MirageRequest request) {
+        if (task == null || task.isCancelled()) {
+            return null;
+        }
+
+        if (request.memoryCache() == null) request.memoryCache(defaultMemoryCache);
+        if (request.diskCache() == null) request.diskCache(defaultDiskCache);
+        if (request.executor() == null) request.executor(defaultExecutor);
+        if (request.urlFactory() == null) request.urlFactory(defaultUrlConnectionFactory);
+
+        // if the url is blank, fault out immediately
+        if (request.uri() == null || TextUtils.isEmpty(request.uri().toString())) {
+            if (request.target() != null) request.target().onError(
+                    new IllegalArgumentException("Uri is null"), Source.MEMORY,
+                    request);
+            return null;
+        }
+
+        Bitmap resource;
+
+        // Check immediately if the resource is in the memory cache
+        MemoryCache<String, Bitmap> memCache = request.memoryCache();
+        if (memCache != null) {
+            resource = memCache.get(request.getResultKey());
+            if (resource != null) {
+                if (request.target() != null) request.target().onResult(resource,
+                        Source.MEMORY, request);
+                return null;
+            }
+        }
+
+        // Check immediately if the resource is in the error cache
+        LoadError error = getLoadError(request.uri());
+        if (error != null && error.isValid()) {
+            if (request.target() != null) request.target().onError(error.getException(),
+                    Source.MEMORY, request);
+            return null;
+        }
+
+		Executor executor = request.executor();
+		if (request.target() != null) request.target().onPreparingLoad();
+        task.executeOnExecutor(executor);
+        return task;
+	}
+
 
 	/**
 	 * Fires off the loading synchronous.
@@ -219,6 +293,7 @@ public class Mirage {
 	 * @param request the configured request for the resource to load
 	 * @return the loaded resource
 	 */
+    @WorkerThread
 	public Bitmap goSync(MirageRequest request) throws MirageIOException {
 		if (isMainThread()) throw new NetworkOnMainThreadException();
 		if (request.target() != null) throw new IllegalArgumentException("goSync does not allow for callbacks");
@@ -228,14 +303,17 @@ public class Mirage {
 		if (request.executor() == null) request.executor(defaultExecutor);
 		if (request.urlFactory() == null) request.urlFactory(defaultUrlConnectionFactory);
 
-		MirageTask<Void, Void, Bitmap> task;
-		if (request.uri().getScheme().startsWith("file")) {
-			task = new BitmapFileTask(this, request, loadErrorManager, null);
-		} else if (request.uri().getScheme().startsWith("content")) {
-			task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, null);
-		} else {
-			task = new BitmapUrlTask(this, request, loadErrorManager, null);
-		}
+        cancelRequest(request.target());
+
+        MirageTask<Void, Void, Bitmap> task;
+        if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
+            task = new BitmapFileTask(this, request, loadErrorManager, null);
+        } else if (request.uri().getScheme().startsWith(SCHEME_CONTENT) ||
+                request.uri().getScheme().startsWith(SCHEME_ANDROID_RESOURCE)) {
+            task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, null);
+        } else {
+            task = new BitmapUrlTask(this, request, loadErrorManager, null);
+        }
 		Bitmap bitmap = task.doTask();
 		requestObjectPool.recycle(request);
 		return bitmap;
@@ -256,6 +334,7 @@ public class Mirage {
 		cancelRequest(request.target());
 
 		// TODO: dont cache if the thread has been interrupted
+        // FIXME: Can i modify the others tasks so I dont have to make a new task here?
 		BitmapDownloadTask task = new BitmapDownloadTask(this, request, loadErrorManager, downloadTaskCallback);
 		addRequestToList(request, task);
 		if (request.target() != null) request.target().onPreparingLoad();
@@ -302,7 +381,7 @@ public class Mirage {
 		} else {
 			MirageTask t = runningRequests.remove(target);
 			if (t != null) {
-				t.cancel(true);
+				t.mirageCancel();
 			}
 		}
 	}
@@ -315,7 +394,7 @@ public class Mirage {
 	public void cancelRequest(View view) {
 		MirageTask t = runningRequests.remove(view);
 		if (t != null) {
-			t.cancel(true);
+            t.mirageCancel();
 		}
 	}
 
@@ -447,7 +526,7 @@ public class Mirage {
 		}
 	}
 
-	private BitmapUrlTask.Callback<Bitmap> bitmapUrlTaskCallback = new BitmapUrlTask.Callback<Bitmap>() {
+	private BitmapUrlTask.Callback<Bitmap> bitmapGoTaskCallback = new BitmapUrlTask.Callback<Bitmap>() {
 		@Override
 		public void onCancel(MirageTask task, MirageRequest request) {
 			removeSavedTask(request, task);

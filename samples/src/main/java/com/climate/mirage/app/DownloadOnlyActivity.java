@@ -48,6 +48,11 @@ public class DownloadOnlyActivity extends AppCompatActivity {
 				Log.d("DownloadOnlyActivity", "onError", e);
 				textView.setText("Error! " + e.toString());
 			}
+
+			@Override
+			public void onCancel() {
+				textView.setText("onCancel");
+			}
 		});
 		request.downloadOnly();
 

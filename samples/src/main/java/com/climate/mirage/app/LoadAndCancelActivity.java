@@ -1,7 +1,6 @@
 package com.climate.mirage.app;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -44,13 +43,10 @@ public class LoadAndCancelActivity extends AppCompatActivity {
 	}
 
 	private void loadMirageImage() {
-		BitmapFactory.Options opts = new BitmapFactory.Options();
-		opts.inSampleSize = 8;
 		Mirage.get(LoadAndCancelActivity.this)
-				.load("http://i.imgur.com/UP3HW5C.jpg")
-				.options(opts)
-				.resize(300, 200)
+				.load(Images.PUPPY)
 				.into(iv)
+				.fit()
 				.placeHolder(R.drawable.mirage_ic_launcher)
 				.error(R.drawable.ic_error)
 				.fade()

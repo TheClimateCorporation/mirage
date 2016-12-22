@@ -1,9 +1,9 @@
 package com.climate.mirage.app;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -26,28 +26,21 @@ public class ListActivity extends AppCompatActivity {
 		setContentView(listView);
 
 		items = new ArrayList<>();
-		items.add("http://i.imgur.com/p4JZynw.jpg");
-		items.add("http://i.imgur.com/z3bACFB.png");
-		items.add("http://i.imgur.com/f6eUvmU.jpg");
-		items.add("http://i.imgur.com/75RUeYi.jpg");
-		items.add("http://i.imgur.com/yhFcaVP.jpg");
-		items.add("http://i.imgur.com/Eu3vcth.jpg");
-		items.add("http://i.imgur.com/0tpglPb.jpg");
-		items.add("http://i.imgur.com/zIP4Q7b.jpg");
-		items.add("http://i.imgur.com/O1g0n8S.jpg");
-		items.add("http://i.imgur.com/zQCWo1u.jpg");
-		items.add("http://i.imgur.com/A0Xhtyc.jpg");
-		items.add("http://i.imgur.com/UP3HW5C.jpg");
-		items.add("http://i.imgur.com/0Z6ixpw.jpg");
-		items.add("http://i.imgur.com/oHgAUBG.jpg");
-		items.add("http://i.imgur.com/nOWrxx4.jpg");
-		items.add("http://i.imgur.com/f5nxRSY.jpg");
-		items.add("http://i.imgur.com/G4um2VX.jpg");
-		items.add("http://i.imgur.com/KwXxSkf.jpg");
-		items.add("http://i.imgur.com/7O4GWLH.jpg");
-		items.add("http://i.imgur.com/0Z6ixpw.jpg");
-		items.add("http://i.imgur.com/VR9eoOc.jpg");
-		items.add("http://i.imgur.com/DJe3mbc.jpg");
+		items.add("https://i.imgur.com/lCL6kEF.jpg");
+		items.add("https://i.imgur.com/HDrJjF0.jpg");
+		items.add("https://i.imgur.com/hY9kBxr.jpg");
+		items.add("https://i.imgur.com/3ndso90.jpg");
+		items.add("https://i.imgur.com/AGDbbKl.jpg");
+		items.add("https://i.imgur.com/7IAT3YE.jpg");
+		items.add("https://i.imgur.com/FQgMesN.jpg");
+		items.add("https://i.imgur.com/J8eM6C0.jpg");
+		items.add("https://i.imgur.com/drnRnjv.jpg");
+		items.add("https://i.imgur.com/oDam7Rw.jpg");
+		items.add("https://i.imgur.com/yFMQ72Z.jpg");
+		items.add("https://i.imgur.com/hx08qkY.jpg");
+		items.add("https://i.imgur.com/zD37eJG.jpg");
+		items.add("https://i.imgur.com/a3yPtWq.jpg");
+		items.add("https://i.imgur.com/6kR3jEk.jpg");
 
 		listView.setAdapter(new MyAdapter(this, items));
 	}
@@ -55,9 +48,11 @@ public class ListActivity extends AppCompatActivity {
 	private class MyAdapter extends BaseAdapter {
 
 		private ArrayList<String> items;
+        private LayoutInflater inflater;
 
 		public MyAdapter(Context context, ArrayList<String> items) {
 			this.items = items;
+            inflater = LayoutInflater.from(context);
 		}
 
 		@Override
@@ -79,29 +74,23 @@ public class ListActivity extends AppCompatActivity {
 		public View getView(int position, View convertView, ViewGroup parent) {
 			ImageView iv;
 			if (convertView == null) {
-				iv = new ImageView(ListActivity.this);
-				iv.setMaxWidth(300);
-				iv.setMaxHeight(200);
-//				iv.setMinimumWidth(300);
-//				iv.setMinimumHeight(300);
-				iv.setAdjustViewBounds(true);
+                convertView = inflater.inflate(R.layout.list_item_type1, parent, false);
+                iv = (ImageView)convertView.findViewById(R.id.imageView);
+                convertView.setTag(iv);
 			} else {
-				iv = (ImageView)convertView;
+				iv = (ImageView)convertView.getTag();
 			}
 
-			BitmapFactory.Options opts = new BitmapFactory.Options();
-			opts.inSampleSize = 8;
 			Mirage.get(ListActivity.this)
 					.load(getItem(position))
-					.options(opts)
-					.resize(300, 200)
 					.into(iv)
+					.fit()
 					.placeHolder(R.drawable.mirage_ic_launcher)
 					.error(R.drawable.ic_error)
 					.fade()
 					.go();
 
-			return iv;
+			return convertView;
 		}
 	}
 }

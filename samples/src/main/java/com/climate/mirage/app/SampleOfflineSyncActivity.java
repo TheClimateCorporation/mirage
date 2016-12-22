@@ -65,30 +65,24 @@ public class SampleOfflineSyncActivity extends AppCompatActivity {
 		appMirage.setDefaultExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 
 		items = new ArrayList<>();
-		items.add("http://i.imgur.com/p4JZynw.jpg");
-		items.add("http://i.imgur.com/z3bACFB.png");
-		items.add("http://i.imgur.com/f6eUvmU.jpg");
-		items.add("http://i.imgur.com/75RUeYi.jpg");
-		items.add("http://i.imgur.com/yhFcaVP.jpg");
-		items.add("http://i.imgur.com/Eu3vcth.jpg");
-		items.add("http://i.imgur.com/0tpglPb.jpg");
-		items.add("http://i.imgur.com/zIP4Q7b.jpg");
-		items.add("http://i.imgur.com/O1g0n8S.jpg");
-//		items.add("http://i.imgur.com/zQCWo1u.jpg");
-//		items.add("http://i.imgur.com/A0Xhtyc.jpg");
-//		items.add("http://i.imgur.com/UP3HW5C.jpg");
-//		items.add("http://i.imgur.com/0Z6ixpw.jpg");
-//		items.add("http://i.imgur.com/oHgAUBG.jpg");
-//		items.add("http://i.imgur.com/nOWrxx4.jpg");
-//		items.add("http://i.imgur.com/f5nxRSY.jpg");
-//		items.add("http://i.imgur.com/G4um2VX.jpg");
-//		items.add("http://i.imgur.com/KwXxSkf.jpg");
-//		items.add("http://i.imgur.com/7O4GWLH.jpg");
-//		items.add("http://i.imgur.com/0Z6ixpw.jpg");
-//		items.add("http://i.imgur.com/VR9eoOc.jpg");
-//		items.add("http://i.imgur.com/DJe3mbc.jpg");
+		items.add("https://i.imgur.com/lCL6kEF.jpg");
+		items.add("https://i.imgur.com/HDrJjF0.jpg");
+		items.add("https://i.imgur.com/hY9kBxr.jpg");
+		items.add("https://i.imgur.com/3ndso90.jpg");
+		items.add("https://i.imgur.com/AGDbbKl.jpg");
+		items.add("https://i.imgur.com/7IAT3YE.jpg");
+		items.add("https://i.imgur.com/FQgMesN.jpg");
+		items.add("https://i.imgur.com/J8eM6C0.jpg");
+		items.add("https://i.imgur.com/drnRnjv.jpg");
 
 		reset();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		syncMirage.dispose();
+		appMirage.dispose();
 	}
 
 	private void reset() {
@@ -194,14 +188,16 @@ public class SampleOfflineSyncActivity extends AppCompatActivity {
 					ViewGroup.LayoutParams.MATCH_PARENT,
 					ViewGroup.LayoutParams.MATCH_PARENT);
 			container.addView(iv, lp);
-			MirageRequest request = appMirage.load(items.get(position))
-					.resize(width, height)
-					.skipWritingMemoryCache(true)
-					.skipReadingMemoryCache(true)
-					.diskCacheStrategy(DiskCacheStrategy.SOURCE);
-			MyImageTarget target = new MyImageTarget(request, iv, position);
-			request.into(target);
-			target.fade().placeHolder(R.drawable.mirage_ic_launcher).error(R.drawable.ic_error).go();
+
+            MirageRequest request = appMirage
+                    .load(items.get(position))
+                    .skipWritingMemoryCache(true);
+            request.into(new MyImageTarget(request, iv, position))
+                    .fit()
+                    .fade()
+                    .placeHolder(R.drawable.mirage_ic_launcher)
+                    .error(R.drawable.ic_error)
+                    .go();
 			return iv;
 		}
 	}

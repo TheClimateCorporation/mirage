@@ -2,20 +2,25 @@ package com.climate.mirage.tasks;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.support.annotation.Nullable;
 
 import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.disk.writers.BitmapWriter;
+import com.climate.mirage.cache.disk.writers.InputStreamWriter;
 import com.climate.mirage.errors.LoadError;
 import com.climate.mirage.exceptions.MirageException;
 import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.exceptions.MirageOomException;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
+import com.climate.mirage.utils.IOUtils;
+import com.climate.mirage.utils.MathUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.util.List;
 
@@ -65,10 +70,24 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 
 		// check to see if we have the source or the processed version in our disk cache
 		if (!isCancelled() && !request.isSkipReadingDiskCache()) {
-			bitmap = getFromResultDiskCache();
-			if (bitmap == null) {
-				bitmap = getFromSourceDiskCache();
-				if (bitmap != null) bitmap = applyProcessors(bitmap);
+            bitmap = getFromResultDiskCache();
+
+            // if there is not a cached copy in the result disk cache, look
+            // to see if there's a copy in the source disk cache
+            if (bitmap == null) {
+                boolean isInCache = isInFileCache(request.getSourceKey());
+                if (request.isInSampleSizeDynamic() && isInCache) {
+                    BitmapFactory.Options opts = new BitmapFactory.Options();
+                    opts.inJustDecodeBounds = true;
+                    getFromDiskCache(request.getSourceKey(), opts);
+                    int sampleSize = determineSampleSize(opts);
+                    request.inSampleSize(sampleSize);
+                }
+
+                if (isInCache) {
+                    bitmap = getFromSourceDiskCache();
+                    if (bitmap != null) bitmap = applyProcessors(bitmap);
+                }
 			}
 
 			if (bitmap != null) {
@@ -95,7 +114,27 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		// we have to get this image from the network, let's go!
 		if (!isCancelled()) {
 			try {
-				bitmap = loadFromExternal();
+                if (request.isInSampleSizeDynamic()) {
+                    BitmapFactory.Options opts = new BitmapFactory.Options();
+                    opts.inJustDecodeBounds = true;
+                    InputStream in = createInputStreamForExternal();
+                    BitmapFactory.decodeStream(in, null, opts);
+                    int sampleSize = determineSampleSize(opts);
+                    request.inSampleSize(sampleSize);
+                }
+				if (isCancelled() || Thread.interrupted()) return null;
+				try {
+					bitmap = loadFromExternal();
+				} catch (OutOfMemoryError e) {
+                    if (request.memoryCache() != null) request.memoryCache().clear();
+                    System.gc();
+                    try {
+                        bitmap = loadFromExternal();
+                    } catch (OutOfMemoryError e2) {
+                        // give up
+                        throw new MirageOomException(Mirage.Source.EXTERNAL);
+                    }
+				}
 				if (isCancelled() || Thread.interrupted()) return null;
 				if (bitmap != null) bitmap = applyProcessors(bitmap);
 				if (isCancelled()) return null;
@@ -119,14 +158,54 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 						putResultInDiskCache(bitmap);
 					}
 				}
-				// SOURCE was taken care of on loading.
+				// saving the source is taken care of during loading
+                // since it must directly write to the file
 			}
 		}
 
 		return !isCancelled() ? bitmap : null;
 	}
 
-	abstract protected Bitmap loadFromExternal() throws IOException;
+    private int determineSampleSize(BitmapFactory.Options outOpts) {
+        int dimen = Math.max(outOpts.outWidth, outOpts.outHeight);
+        float div = dimen / (float)request.getResizeTargetDimen();
+		if (div < 1) return 1;
+        if (request.isResizeSampleUndershoot()) {
+            int sampleSize = MathUtils.upperPowerof2((int)div);
+            return sampleSize;
+        } else {
+            int sampleSize = MathUtils.lowerPowerOf2((int)div);
+            return sampleSize;
+        }
+    }
+
+    abstract protected InputStream createInputStreamForExternal() throws IOException;
+
+    private Bitmap loadFromExternal() throws IOException {
+        Bitmap bitmap = null;
+        InputStream in = createInputStreamForExternal();
+
+        // if we need to keep the source, stream it directly to a file
+        // we can't load it to memory first and then write to file because
+        // there could be bitmap options on the stream.
+        if (isSaveSource()) {
+            request.diskCache().put(request.getSourceKey(), new InputStreamWriter(in));
+            IOUtils.close(in);
+            File file = request.diskCache().get(request.getSourceKey());
+            if (file != null) {
+                bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), request.options());
+            }
+        } else {
+            bitmap = BitmapFactory.decodeStream(in, request.outPadding(), request.options());
+            IOUtils.close(in);
+        }
+
+        return bitmap;
+    }
+
+    private boolean isSaveSource() {
+        return request.isRequestShouldSaveSource();
+    }
 
 	@Override
 	protected void onPostSuccess(Bitmap bitmap) {
@@ -141,7 +220,9 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		if (request.target() != null) request.target().onError(exception, source, request);
 	}
 
-	protected Bitmap getFromMemCache() {
+
+    // FIXME: So many methods here about the cache, can i clean it up any? 
+    private Bitmap getFromMemCache() {
 		if (request.memoryCache() != null && !request.isSkipReadingMemoryCache()) {
 			return request.memoryCache().get(request.getResultKey());
 		} else {
@@ -149,22 +230,28 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		}
 	}
 
-	protected void putInMemCache(Bitmap bitmap) {
+    private void putInMemCache(Bitmap bitmap) {
 		if (isCancelled()) return;
 		if (request.memoryCache() != null && !request.isSkipWritingMemoryCache()) {
 			request.memoryCache().put(request.getResultKey(), bitmap);
 		}
 	}
 
-	protected Bitmap getFromSourceDiskCache() throws MirageOomException {
+    private Bitmap getFromSourceDiskCache() throws MirageOomException {
 		return getFromDiskCache(true);
 	}
 
-	protected Bitmap getFromResultDiskCache() throws MirageOomException {
+    private Bitmap getFromResultDiskCache() throws MirageOomException {
 		return getFromDiskCache(false);
 	}
 
-	protected void putResultInDiskCache(Bitmap bitmap) {
+    private boolean isInFileCache(String key) {
+        if (request.diskCache() == null || request.isSkipReadingDiskCache()) return false;
+        File file = request.diskCache().get(key);
+        return file != null;
+    }
+
+	private void putResultInDiskCache(Bitmap bitmap) {
 		if (isCancelled()) return;
 		if (request.diskCache() != null) {
 			if (request.diskCacheStrategy() == DiskCacheStrategy.RESULT
@@ -174,31 +261,35 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		}
 	}
 
+    private Bitmap getFromDiskCache(String key, @Nullable BitmapFactory.Options opts) {
+        if (request.diskCache() == null || request.isSkipReadingDiskCache()) return null;
+        File file = request.diskCache().get(key);
+        if (file != null) {
+            try {
+                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
+                return bitmap;
+            } catch (OutOfMemoryError e) {
+                if (request.memoryCache() != null) {
+                    request.memoryCache().clear();
+                }
+                System.gc();
+                try {
+                    Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
+                    return bitmap;
+                } catch (OutOfMemoryError e2) {
+                    throw new MirageOomException(Mirage.Source.DISK);
+                }
+            }
+        } else {
+            return null;
+        }
+    }
+
 	private Bitmap getFromDiskCache(boolean fromSource) throws MirageOomException {
 		if (request.diskCache() == null || request.isSkipReadingDiskCache()) return null;
-
 		String key = fromSource ? request.getSourceKey() : request.getResultKey();
 		BitmapFactory.Options options = fromSource ? request.options() : null;
-		File file = request.diskCache().get(key);
-		if (file != null) {
-			try {
-				Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-				return bitmap;
-			} catch (OutOfMemoryError e) {
-				if (request.memoryCache() != null) {
-					request.memoryCache().clear();
-				}
-				System.gc();
-				try {
-					Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-					return bitmap;
-				} catch (OutOfMemoryError e2) {
-					throw new MirageOomException(Mirage.Source.DISK);
-				}
-			}
-		} else {
-			return null;
-		}
+        return getFromDiskCache(key, options);
 	}
 
 	private Bitmap applyProcessors(Bitmap bitmap) {

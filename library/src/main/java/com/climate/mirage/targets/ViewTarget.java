@@ -4,8 +4,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.annotation.DrawableRes;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import com.climate.mirage.Mirage;
 import com.climate.mirage.requests.MirageRequest;
@@ -30,6 +32,8 @@ abstract public class ViewTarget<V extends View> implements Target<Bitmap>, Draw
 	private Drawable errorDrawable;
 	private MirageAnimation animation; // TODO: add the generic back into this
  	private DrawableFactory successDrawableFactory;
+    private boolean isFit = false;
+    private MirageTask<Void, Void, Bitmap> mirageTask;
 
 	public ViewTarget(V view) {
 		this(null, view);
@@ -117,6 +121,13 @@ abstract public class ViewTarget<V extends View> implements Target<Bitmap>, Draw
 		return this;
 	}
 
+	public ViewTarget<V> fit() {
+        isFit = true;
+		return this;
+	}
+
+	private ViewTreeObserver.OnGlobalLayoutListener onGlobalLayoutListener;
+
 	/**
 	 * If the default {@link android.graphics.drawable.BitmapDrawable} is not desired
 	 * set a drawable factory which converts the loaded resource into a drawable object
@@ -133,8 +144,22 @@ abstract public class ViewTarget<V extends View> implements Target<Bitmap>, Draw
 	 * Fires the request off asynchronously.
 	 */
 	public MirageTask go() {
-		if (request == null)
-			throw new IllegalStateException("Can not call this method without settings request instance");
+        if (request == null)
+            throw new IllegalStateException("Can not call this method without settings request instance");
+        if (isFit) {
+            View v = getView();
+            if (v != null) {
+                if (v.getWidth() > 0 && v.getHeight() > 0) {
+                    request.dynamicResample(Math.max(v.getWidth(), v.getHeight()));
+                    request.resize(v.getWidth(), v.getHeight());
+                } else {
+                    fitImageLater();
+                    mirageTask = request.createGoTask();
+                    return mirageTask;
+                }
+            }
+        }
+
 		return request.go();
 	}
 
@@ -157,8 +182,9 @@ abstract public class ViewTarget<V extends View> implements Target<Bitmap>, Draw
 	@Override
 	public void onPreparingLoad() {
 		V view = getView();
-		if (view != null) {
-			onPreparingLoad(view);
+        if (view != null) {
+            cleanUpLayoutListener();
+            onPreparingLoad(view);
 		}
 	}
 
@@ -177,6 +203,12 @@ abstract public class ViewTarget<V extends View> implements Target<Bitmap>, Draw
 			onError(view, e, source, request);
 		}
 	}
+
+    @Override
+    public void onCancel() {
+        mirageTask = null;
+        cleanUpLayoutListener();
+    }
 
 	@Override
 	public Drawable createDrawable(Context context, Bitmap bitmap) {
@@ -198,5 +230,45 @@ abstract public class ViewTarget<V extends View> implements Target<Bitmap>, Draw
 	protected void onError(V view, Exception e, Mirage.Source source, MirageRequest request) {
 
 	}
+
+    private void fitImageLater() {
+        View v = getView();
+
+        if (onGlobalLayoutListener == null) {
+            onGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    View v = getView();
+                    if (v != null && v.getWidth() > 0 && v.getHeight() > 0) {
+                        cleanUpLayoutListener();
+                        // note: request is a pooled object. If the task was canceled
+                        // this object is back in the object pool and it would be modifying
+                        // someone else's call. No no....
+                        if (mirageTask != null && !mirageTask.isCancelled()) {
+                            request.dynamicResample(Math.max(v.getWidth(), v.getHeight()));
+                            request.resize(v.getWidth(), v.getHeight());
+                            if (mirageTask != null) {
+                                request.executeGoTask(mirageTask);
+                                mirageTask = null;
+                            }
+                        }
+                    }
+                }
+            };
+        }
+        v.getViewTreeObserver().addOnGlobalLayoutListener(onGlobalLayoutListener);
+    }
+
+    private void cleanUpLayoutListener() {
+        View v = getView();
+        if (onGlobalLayoutListener != null && v != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                v.getViewTreeObserver().removeOnGlobalLayoutListener(onGlobalLayoutListener);
+            } else {
+                v.getViewTreeObserver().removeGlobalOnLayoutListener(onGlobalLayoutListener);
+            }
+        }
+        onGlobalLayoutListener = null;
+    }
 
 }

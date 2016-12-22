@@ -12,6 +12,7 @@ import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.utils.IOUtils;
+import com.climate.mirage.utils.MathUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -45,6 +46,14 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 				File sourceFile = request.diskCache().get(request.getSourceKey());
 				File resultFile = request.diskCache().get(request.getResultKey());
 				if (sourceFile != null && resultFile == null) {
+                    if (request.isInSampleSizeDynamic()) {
+                        BitmapFactory.Options opts = new BitmapFactory.Options();
+                        opts.inJustDecodeBounds = true;
+                        BitmapFactory.decodeFile(sourceFile.getAbsolutePath(), opts);
+                        int sampleSize = determineSampleSize(opts);
+                        request.inSampleSize(sampleSize);
+                    }
+
 					Bitmap bitmap = BitmapFactory.decodeFile(sourceFile.getAbsolutePath(), request.options());
 					bitmap = applyProcessors(bitmap);
 					putResultInDiskCache(bitmap);
@@ -124,6 +133,19 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 		request.target().onError(exception, source, request);
 	}
 
+    private int determineSampleSize(BitmapFactory.Options outOpts) {
+        int dimen = Math.max(outOpts.outWidth, outOpts.outHeight);
+        float div = dimen / (float)request.getResizeTargetDimen();
+        if (div < 1) return 1;
+        if (request.isResizeSampleUndershoot()) {
+            int sampleSize = MathUtils.upperPowerof2((int)div);
+            return sampleSize;
+        } else {
+            int sampleSize = MathUtils.lowerPowerOf2((int)div);
+            return sampleSize;
+        }
+    }
+
 	private void streamIntoFile(String key) throws IOException {
 		InputStream in = null;
 		try {
@@ -136,7 +158,22 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 	}
 
 	private Bitmap streamFromNetwork() throws IOException {
-		InputStream in = null;
+
+        InputStream in = null;
+        try {
+            if (request.isInSampleSizeDynamic()) {
+                BitmapFactory.Options opts = new BitmapFactory.Options();
+                opts.inJustDecodeBounds = true;
+                URLConnection connection = getConnection();
+                in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);
+                BitmapFactory.decodeStream(in, null, opts);
+                int sampleSize = determineSampleSize(opts);
+                request.inSampleSize(sampleSize);
+            }
+        } finally {
+            IOUtils.close(in);
+        }
+
 		try {
 			URLConnection connection = getConnection();
 			in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);

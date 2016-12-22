@@ -19,10 +19,15 @@ public class SimpleKeyMaker implements KeyMaker {
 		StringBuilder b = new StringBuilder();
 		b.append(request.uri().toString().hashCode());
 
-		if (request.options() != null)  {
+        if (request.isInSampleSizeDynamic()) {
+            b.append("_size");
+            b.append(request.getResizeTargetDimen());
+            b.append("-under");
+            b.append(request.isResizeSampleUndershoot());
+        } else if (request.options() != null) {
 			b.append("_");
 			b.append(request.options().inSampleSize);
-		}
+        }
 
 		List<BitmapProcessor> processors = request.getProcessors();
 		if (processors != null) {

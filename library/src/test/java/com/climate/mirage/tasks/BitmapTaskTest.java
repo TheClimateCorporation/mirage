@@ -154,10 +154,10 @@ public class BitmapTaskTest {
         };
 
         BitmapUrlTask task = new BitmapUrlTask(null, request, manager, callback);
-        task.execute(); // can not executeOnExecutor or the text will never finish
+        task.execute(); // can not executeOnExecutor or the test will never finish
         waitForIt();
         Mockito.verify(diskCache, Mockito.times(1)).get(Mockito.eq("123"));
-        Mockito.verify(diskCache, Mockito.times(1)).get(Mockito.eq("1234")); // only store the processed version
+        Mockito.verify(diskCache, Mockito.times(2)).get(Mockito.eq("1234")); // only store the processed version
         Mockito.verify(target, Mockito.times(1)).onResult(
                 (Bitmap) Mockito.any(), Mockito.eq(Mirage.Source.DISK), Mockito.eq(request));
         Assert.assertEquals(0, mockWebServer.getRequestCount());
