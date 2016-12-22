@@ -5,9 +5,14 @@ import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 import org.robolectric.manifest.AndroidManifest;
 import org.robolectric.res.FileFsFile;
-import org.robolectric.res.FsFile;
+import org.robolectric.util.Logger;
+import org.robolectric.util.ReflectionHelpers;
+
+// https://github.com/nenick/AndroidStudioAndRobolectric/blob/master/app/src/test/java/com/example/myapplication/CustomRobolectricRunner.java
 
 public class RoboManifestRunner extends RobolectricGradleTestRunner {
+
+    private static final String BUILD_OUTPUT = "build/intermediates";
 
     public RoboManifestRunner(Class<?> klass) throws InitializationError {
         super(klass);
@@ -15,35 +20,69 @@ public class RoboManifestRunner extends RobolectricGradleTestRunner {
 
     @Override
     protected AndroidManifest getAppManifest(Config config) {
-        AndroidManifest appManifest = super.getAppManifest(config);
-        FsFile androidManifestFile = appManifest.getAndroidManifestFile();
+        if (config.constants() == Void.class) {
+            Logger.error("Field 'constants' not specified in @Config annotation");
+            Logger.error("This is required when using RobolectricGradleTestRunner!");
+            throw new RuntimeException("No 'constants' field in @Config annotation!");
+        }
 
-        if (androidManifestFile.exists()) {
-            return appManifest;
+        final String type = getType(config);
+        final String flavor = getFlavor(config);
+        final String applicationId = getApplicationId(config);
+
+        final FileFsFile res;
+        if (FileFsFile.from(BUILD_OUTPUT, "res", flavor, type).exists()) {
+            res = FileFsFile.from(BUILD_OUTPUT, "res", flavor, type);
         } else {
-            final int emulatedSdk = config.emulateSdk();
-            String moduleRoot = getModuleRootPath(config);
-            androidManifestFile = FileFsFile.from(moduleRoot, appManifest.getAndroidManifestFile().getPath());
-            FsFile resDirectory = FileFsFile.from(moduleRoot, appManifest.getResDirectory().getPath());
-            FsFile assetsDirectory = FileFsFile.from(moduleRoot, appManifest.getAssetsDirectory().getPath());
+            // Use res/merged if the output directory doesn't exist for Data Binding compatibility
+            res = FileFsFile.from(BUILD_OUTPUT, "res/merged", flavor, type);
+        }
+        final FileFsFile assets = FileFsFile.from(BUILD_OUTPUT, "assets", flavor, type);
 
+        final FileFsFile manifest;
+        if (FileFsFile.from(BUILD_OUTPUT, "manifests").exists()) {
+            manifest = FileFsFile.from(BUILD_OUTPUT, "manifests", "aapt", flavor, type, "AndroidManifest.xml");
+        } else {
+            // Fallback to the location for library manifests
+            manifest = FileFsFile.from(BUILD_OUTPUT, "bundles", flavor, type, "AndroidManifest.xml");
+        }
 
-            // So this was working one day and the above was working the other
-            // leave this in until I can figure out why the paths magically changed.
-//            androidManifestFile = FileFsFile.from(moduleRoot, appManifest.getAndroidManifestFile().getPath().replace("bundles", "manifests/test"));
-//            FsFile resDirectory = FileFsFile.from(moduleRoot, appManifest.getResDirectory().getPath().replace("/res", "").replace("bundles", "res"));
-//            FsFile assetsDirectory = FileFsFile.from(moduleRoot, appManifest.getAssetsDirectory().getPath().replace("/assets", "").replace("bundles", "assets"));
-            return new AndroidManifest(androidManifestFile, resDirectory, assetsDirectory) {
-                @Override
-                public int getTargetSdkVersion() {
-                    return emulatedSdk > 2 ? emulatedSdk : 21;
-                }
-            };
+        Logger.debug("Robolectric assets directory: " + assets.getPath());
+        Logger.debug("   Robolectric res directory: " + res.getPath());
+        Logger.debug("   Robolectric manifest path: " + manifest.getPath());
+        Logger.debug("    Robolectric package name: " + applicationId);
+        return new AndroidManifest(manifest, res, assets, applicationId) {
+            @Override
+            public int getTargetSdkVersion() {
+                return 18;
+//                int target = super.getTargetSdkVersion();
+//                target = Math.min(target, 21);
+//                return target;
+            }
+        };
+    }
+
+    private String getType(Config config) {
+        try {
+            return ReflectionHelpers.getStaticField(config.constants(), "BUILD_TYPE");
+        } catch (Throwable e) {
+            return null;
         }
     }
 
-    private String getModuleRootPath(Config config) {
-        String moduleRoot = config.constants().getResource("").toString().replace("file:", "");
-        return moduleRoot.substring(0, moduleRoot.indexOf("/build"));
+    private String getFlavor(Config config) {
+        try {
+            return ReflectionHelpers.getStaticField(config.constants(), "FLAVOR");
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    private String getApplicationId(Config config) {
+        try {
+            return ReflectionHelpers.getStaticField(config.constants(), "APPLICATION_ID");
+        } catch (Throwable e) {
+            return null;
+        }
     }
 }

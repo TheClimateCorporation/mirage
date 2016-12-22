@@ -123,7 +123,18 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
                     request.inSampleSize(sampleSize);
                 }
 				if (isCancelled() || Thread.interrupted()) return null;
-				bitmap = loadFromExternal();
+				try {
+					bitmap = loadFromExternal();
+				} catch (OutOfMemoryError e) {
+                    if (request.memoryCache() != null) request.memoryCache().clear();
+                    System.gc();
+                    try {
+                        bitmap = loadFromExternal();
+                    } catch (OutOfMemoryError e2) {
+                        // give up
+                        throw new MirageOomException(Mirage.Source.EXTERNAL);
+                    }
+				}
 				if (isCancelled() || Thread.interrupted()) return null;
 				if (bitmap != null) bitmap = applyProcessors(bitmap);
 				if (isCancelled()) return null;

@@ -213,6 +213,14 @@ public class Mirage {
     public MirageTask<Void, Void, Bitmap> createGoTask(MirageRequest request) {
         cancelRequest(request.target());
 
+        // if the url is blank, fault out immediately
+        if (request.uri() == null || TextUtils.isEmpty(request.uri().toString())) {
+            if (request.target() != null) request.target().onError(
+                    new IllegalArgumentException("Uri is null"), Source.MEMORY,
+                    request);
+            return null;
+        }
+
         MirageTask<Void, Void, Bitmap> task;
         if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
             task = new BitmapFileTask(this, request, loadErrorManager, bitmapGoTaskCallback);
@@ -234,7 +242,7 @@ public class Mirage {
      * @return The AsyncTask responsible for running the request. It could be null if the resource is in the memory cache
      */
 	public MirageTask<Void, Void, Bitmap> executeGoTask(MirageTask<Void, Void, Bitmap> task, MirageRequest request) {
-        if (task.isCancelled()) {
+        if (task == null || task.isCancelled()) {
             return null;
         }
 
