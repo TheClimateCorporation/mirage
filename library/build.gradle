@@ -52,10 +52,6 @@ dependencies {
     testCompile "org.robolectric:robolectric:3.0-rc2"
 }
 
-task javadoc(type: Javadoc) {
-    source = 'com.climate.mirage'
-    destinationDir = file("doc")
-}
 
 def coverageSourceDirs = [
         '../library/src/main/java'
@@ -93,4 +89,26 @@ task installArchives(type: Upload) {
         pom.artifactId = 'mirage'
         pom.version = '1.1.0'
     }
+}
+
+// taken from http://stackoverflow.com/questions/11474729/how-to-build-sources-jar-with-gradle
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+// docs fail on @see {@link android.net.Uri#parse(String)} dont know why
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
 }

@@ -156,8 +156,8 @@ public class Mirage {
 	 * The URI of the asset to load. Types of Uri's supported include
 	 * http, https, file, and content
 	 *
-	 * @see {@link android.net.Uri#parse(String)}
-	 * @see {@link android.net.Uri#fromFile(java.io.File)}
+	 * @see android.net.Uri#parse(String)
+	 * @see android.net.Uri#fromFile(java.io.File)
 	 *
 	 * @param uri the uri to load
 	 * @return an new (or recycled) {@link com.climate.mirage.requests.MirageRequest} instance to daisy chain

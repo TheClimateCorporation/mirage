@@ -68,7 +68,7 @@ public class DiskLruCacheWrapper implements DiskCache {
     }
 
 	/**
-	 * Allows this cache to toggle between read & write or just read-only mode. This is
+	 * Allows this cache to toggle between read &amp; write or just read-only mode. This is
 	 * useful for when data is being read from an offline sync cache, but we do not want to
 	 * add more data to the cache if it's read it from online.
 	 *
