@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'jacoco'
+apply plugin: 'com.github.dcendents.android-maven'
 
 jacoco {
     toolVersion = "0.7.1.201405082137"
@@ -81,5 +82,15 @@ task jacocoTestReport(type:JacocoReport, dependsOn: "testDebug") {
     reports {
         xml.enabled = true
         html.enabled = true
+    }
+}
+
+task installArchives(type: Upload) {
+    description "Installs the artifacts to the local Maven repository."
+    repositories.mavenInstaller {
+        configuration = configurations.default
+        pom.groupId = 'com.climate.android'
+        pom.artifactId = 'mirage'
+        pom.version = '1.1.0'
     }
 }
