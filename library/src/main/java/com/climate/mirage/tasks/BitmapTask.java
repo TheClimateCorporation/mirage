@@ -138,7 +138,10 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 				if (isCancelled() || Thread.interrupted()) return null;
 				if (bitmap != null) bitmap = applyProcessors(bitmap);
 				if (isCancelled()) return null;
-			} catch (InterruptedIOException e) {
+			}
+			// TODO: Throw the timeout exceptions
+			// TODO: return intelligently on interrupted. See other branch
+			catch (InterruptedIOException e) {
 				return null; // no error we just stopped loading it
 			} catch (IOException e) {
 				loadErrorManager.addLoadError(request.uri(), e, Mirage.Source.EXTERNAL);
