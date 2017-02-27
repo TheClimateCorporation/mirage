@@ -23,6 +23,7 @@ import com.climate.mirage.targets.TextViewTarget;
 import com.climate.mirage.tasks.MirageTask;
 
 import java.io.File;
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -447,7 +448,7 @@ public class MirageRequest {
 	 *
 	 * @return The loaded image
 	 */
-	public Bitmap goSync() throws MirageIOException {
+	public Bitmap goSync() throws MirageIOException, InterruptedIOException {
 		if (mirage == null) throw new IllegalStateException("Must set a mirage instance before calling goSync");
 		return mirage.goSync(this);
 	}

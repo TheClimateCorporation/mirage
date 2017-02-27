@@ -38,6 +38,7 @@ import com.climate.mirage.utils.ObjectFactory;
 import com.climate.mirage.utils.ObjectPool;
 
 import java.io.File;
+import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -294,7 +295,7 @@ public class Mirage {
 	 * @return the loaded resource
 	 */
     @WorkerThread
-	public Bitmap goSync(MirageRequest request) throws MirageIOException {
+	public Bitmap goSync(MirageRequest request) throws MirageIOException, InterruptedIOException {
 		if (isMainThread()) throw new NetworkOnMainThreadException();
 		if (request.target() != null) throw new IllegalArgumentException("goSync does not allow for callbacks");
 

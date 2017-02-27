@@ -3,6 +3,7 @@ package com.climate.mirage.tasks;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
@@ -22,10 +23,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 
 abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 
+	private static final String TAG = BitmapTask.class.getSimpleName();
 	private Mirage mirage;
 	private MirageRequest request;
 	private LoadErrorManager loadErrorManager;
@@ -50,12 +53,12 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 	}
 
 	@Override
-	public Bitmap doTask(Void... params) throws MirageIOException {
+	public Bitmap doTask(Void... params) throws MirageIOException, InterruptedIOException {
 		Bitmap bitmap = null;
 
 		// check to see if we have it in our memory cache
 		// memory cache will only store the processed version
-		if (!isCancelled()) {
+		if (!isTaskCancelled()) {
 			bitmap = getFromMemCache();
 			if (bitmap != null) {
 				source = Mirage.Source.MEMORY;
@@ -69,7 +72,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		}
 
 		// check to see if we have the source or the processed version in our disk cache
-		if (!isCancelled() && !request.isSkipReadingDiskCache()) {
+		if (!isTaskCancelled() && !request.isSkipReadingDiskCache()) {
             bitmap = getFromResultDiskCache();
 
             // if there is not a cached copy in the result disk cache, look
@@ -99,7 +102,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 
 		// before we go to the external source, check to see if this uri is in our
 		// error log
-		if (!isCancelled()) {
+		if (!isTaskCancelled()) {
 			// make sure the url isn't in the cached errors
 			LoadError loadError = loadErrorManager.getLoadError(request.uri());
 			if (loadError != null) {
@@ -112,7 +115,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		}
 
 		// we have to get this image from the network, let's go!
-		if (!isCancelled()) {
+		if (!isTaskCancelled()) {
 			try {
                 if (request.isInSampleSizeDynamic()) {
                     BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -122,7 +125,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
                     int sampleSize = determineSampleSize(opts);
                     request.inSampleSize(sampleSize);
                 }
-				if (isCancelled() || Thread.interrupted()) return null;
+				if (isTaskCancelled()) return null;
 				try {
 					bitmap = loadFromExternal();
 				} catch (OutOfMemoryError e) {
@@ -135,14 +138,17 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
                         throw new MirageOomException(Mirage.Source.EXTERNAL);
                     }
 				}
-				if (isCancelled() || Thread.interrupted()) return null;
+				if (isTaskCancelled()) return null;
 				if (bitmap != null) bitmap = applyProcessors(bitmap);
-				if (isCancelled()) return null;
-			}
-			// TODO: Throw the timeout exceptions
-			// TODO: return intelligently on interrupted. See other branch
-			catch (InterruptedIOException e) {
-				return null; // no error we just stopped loading it
+				if (isTaskCancelled()) return null;
+			} catch (SocketTimeoutException e) {
+				Log.d(TAG, "SocketTimeoutException. Failed to read stream before the getReadTimeout expired", e);
+				// don't add this to the loadErrorManager since it was a timeout error and not an IO.
+				throw e;
+			} catch (InterruptedIOException e) {
+				Log.d(TAG, "InterruptedIOException. Thread has been interrupted. Returning back null.", e);
+				if (isTaskCancelled()) return null; // no error we just stopped loading it
+				else throw new MirageIOException(Mirage.Source.EXTERNAL, e);
 			} catch (IOException e) {
 				loadErrorManager.addLoadError(request.uri(), e, Mirage.Source.EXTERNAL);
 				throw new MirageIOException(Mirage.Source.EXTERNAL, e);
@@ -166,7 +172,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 			}
 		}
 
-		return !isCancelled() ? bitmap : null;
+		return !isTaskCancelled() ? bitmap : null;
 	}
 
     private int determineSampleSize(BitmapFactory.Options outOpts) {
@@ -234,7 +240,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 	}
 
     private void putInMemCache(Bitmap bitmap) {
-		if (isCancelled()) return;
+		if (isTaskCancelled()) return;
 		if (request.memoryCache() != null && !request.isSkipWritingMemoryCache()) {
 			request.memoryCache().put(request.getResultKey(), bitmap);
 		}
@@ -255,7 +261,7 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
     }
 
 	private void putResultInDiskCache(Bitmap bitmap) {
-		if (isCancelled()) return;
+		if (isTaskCancelled()) return;
 		if (request.diskCache() != null) {
 			if (request.diskCacheStrategy() == DiskCacheStrategy.RESULT
 					|| request.diskCacheStrategy() == DiskCacheStrategy.ALL) {
@@ -306,5 +312,9 @@ abstract public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 		}
 
 		return bitmap;
+	}
+
+	private boolean isTaskCancelled() {
+		return isCancelled() || Thread.currentThread().isInterrupted();
 	}
 }

@@ -9,6 +9,8 @@ import android.widget.ImageView;
 
 import com.climate.mirage.Mirage;
 
+import java.io.InterruptedIOException;
+
 public class LoadAndCancelActivity extends AppCompatActivity {
 
 	private ImageView iv;
@@ -18,6 +20,18 @@ public class LoadAndCancelActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.row);
+
+		try {
+			try {
+				throw new InterruptedIOException();
+			} catch (OutOfMemoryError e) {
+
+			}
+		} catch (InterruptedIOException e) {
+			e.toString();
+		}
+
+
 		iv = (ImageView)findViewById(R.id.imageView);
 		button1 = (Button)findViewById(R.id.button1);
 		button2 = (Button)findViewById(R.id.button2);
@@ -44,7 +58,8 @@ public class LoadAndCancelActivity extends AppCompatActivity {
 
 	private void loadMirageImage() {
 		Mirage.get(LoadAndCancelActivity.this)
-				.load(Images.PUPPY)
+				/*.load(Images.PUPPY)*/
+				.load("http://pirlwww.lpl.arizona.edu/~perry/Messenger/South_polar_mosaic.png")
 				.into(iv)
 				.fit()
 				.placeHolder(R.drawable.mirage_ic_launcher)
