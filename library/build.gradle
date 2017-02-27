@@ -17,7 +17,7 @@ android {
     }
 
     compileSdkVersion 21 // roboelectric doesn't allow higher than 21 right now
-    buildToolsVersion "22.0.1"
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         minSdkVersion 14

@@ -533,6 +533,7 @@ public class MirageRequest {
 	 * 			to save the result
 	 */
 	public boolean isRequestShouldSaveSource() {
+		if (diskCacheStrategy() == DiskCacheStrategy.NONE) return false;
 		return (diskCacheStrategy() == DiskCacheStrategy.SOURCE
 				|| diskCacheStrategy() == DiskCacheStrategy.ALL
 				|| getSourceKey().equals(getResultKey())
