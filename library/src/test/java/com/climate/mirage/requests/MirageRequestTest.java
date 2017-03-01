@@ -27,6 +27,7 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 @RunWith(RoboManifestRunner.class)
 @Config(constants = BuildConfig.class)
@@ -84,6 +85,8 @@ public class MirageRequestTest {
         try {
             request.goSync();
             Assert.fail("this should have failed");
+        } catch (InterruptedIOException e) {
+            Assert.fail("this should have thrown an InterruptedIOException");
         } catch (MirageIOException e) {
             Assert.fail("this should have thrown an IllegalStateException");
         } catch (IllegalStateException e) {
