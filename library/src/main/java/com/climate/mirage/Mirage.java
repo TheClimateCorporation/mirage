@@ -154,6 +154,25 @@ public class Mirage {
 		return load(Uri.parse(uri));
 	}
 
+	public MirageRequest load(File file) {
+		if (file == null) return load((Uri)null);
+		return load(Uri.fromFile(file));
+	}
+
+	/**
+	 * Method for loading from the drawables folders
+	 * @param resId
+	 * @return
+	 */
+	public MirageRequest load(@AnyRes int resId) {
+		Resources res = applicationContext.getResources();
+		Uri uri = Uri.parse(SCHEME_ANDROID_RESOURCE +
+				"://" + res.getResourcePackageName(resId)
+				+ '/' + res.getResourceTypeName(resId)
+				+ '/' + res.getResourceEntryName(resId));
+		return load(uri);
+	}
+
 	/**
 	 * The URI of the asset to load. Types of Uri's supported include
 	 * http, https, file, and content
@@ -175,27 +194,7 @@ public class Mirage {
 		}
 		return r.mirage(this).uri(uri);
 	}
-
-	public MirageRequest load(File file) {
-		if (file == null) return load((Uri)null);
-		return load(Uri.fromFile(file));
-	}
-
-
-    /**
-     * Method for loading from the drawables folders
-     * @param resId
-     * @return
-     */
-	public MirageRequest load(@AnyRes int resId) {
-        Resources res = applicationContext.getResources();
-        Uri uri = Uri.parse(SCHEME_ANDROID_RESOURCE +
-                "://" + res.getResourcePackageName(resId)
-                + '/' + res.getResourceTypeName(resId)
-                + '/' + res.getResourceEntryName(resId));
-        return load(uri);
-    }
-
+	
 	/**
 	 * Fires off the loading asynchronous. Mostly likely you will not access this directly
 	 * but instead go through {@link com.climate.mirage.targets.ImageViewTarget#go()}
