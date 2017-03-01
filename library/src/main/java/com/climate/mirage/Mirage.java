@@ -150,6 +150,7 @@ public class Mirage {
     }
 
 	public MirageRequest load(String uri) {
+		if (TextUtils.isEmpty(uri)) return load((Uri)null);
 		return load(Uri.parse(uri));
 	}
 
@@ -165,14 +166,18 @@ public class Mirage {
 	 */
 	public MirageRequest load(Uri uri) {
 		MirageRequest r = requestObjectPool.getObject();
-		if (uri.getScheme().startsWith(SCHEME_FILE) ||
-                uri.getScheme().startsWith(SCHEME_ANDROID_RESOURCE) ) {
-			r.diskCacheStrategy(DiskCacheStrategy.RESULT);
+		String scheme = uri != null ? uri.getScheme() : null;
+		if (!TextUtils.isEmpty(scheme)) {
+			if (scheme.startsWith(SCHEME_FILE) ||
+					scheme.startsWith(SCHEME_ANDROID_RESOURCE)) {
+				r.diskCacheStrategy(DiskCacheStrategy.RESULT);
+			}
 		}
 		return r.mirage(this).uri(uri);
 	}
 
 	public MirageRequest load(File file) {
+		if (file == null) return load((Uri)null);
 		return load(Uri.fromFile(file));
 	}
 
