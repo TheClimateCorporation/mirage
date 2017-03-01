@@ -203,5 +203,50 @@ public class MirageRequestTest {
         Assert.assertEquals(400, request.getResizeTargetDimen());
     }
 
+    @Test
+    public void testSaveSourceTrue() {
+        MirageRequest request = createRequest();
+        request.diskCacheStrategy(DiskCacheStrategy.ALL);
+        Assert.assertTrue(request.isRequestShouldSaveSource());
+
+        request = createRequest();
+        request.diskCacheStrategy(DiskCacheStrategy.SOURCE);
+        Assert.assertTrue(request.isRequestShouldSaveSource());
+
+        // this is true because the source and the result are the same
+        request = createRequest();
+        request.diskCacheStrategy(DiskCacheStrategy.RESULT);
+        Assert.assertTrue(request.isRequestShouldSaveSource());
+
+        request = createRequest();
+        request.diskCacheStrategy(DiskCacheStrategy.SOURCE);
+        request.resize(20, 20);
+        Assert.assertTrue(request.isRequestShouldSaveSource());
+    }
+
+    @Test
+    public void testSaveSourceFalse() {
+        MirageRequest request = createRequest();
+        request.uri(Uri.parse("http://www.google.com"));
+        request.resize(20, 20);
+        Assert.assertFalse(request.isRequestShouldSaveSource());
+
+        request = createRequest();
+        request.diskCacheStrategy(DiskCacheStrategy.NONE);
+        Assert.assertFalse(request.isRequestShouldSaveSource());
+    }
+
+    private MirageRequest createRequest() {
+        MirageRequest request = new MirageRequest();
+        request.uri(Uri.parse("http://www.google.com"));
+        request.diskCache(getDiskCache());
+        return request;
+    }
+
+    private DiskCache getDiskCache() {
+        DiskCache cache = Mockito.mock(DiskCache.class);
+        return cache;
+    }
+
 
 }

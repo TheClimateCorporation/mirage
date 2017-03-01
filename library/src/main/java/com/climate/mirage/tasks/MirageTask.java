@@ -7,6 +7,7 @@ import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.requests.MirageRequest;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 
 abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Params, Progress, Result>   {
 
@@ -75,7 +76,7 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 		callback.onPostExecute(this, request, result);
 	}
 
-	abstract public Result doTask(Params... params) throws MirageIOException;
+	abstract public Result doTask(Params... params) throws MirageIOException, InterruptedIOException;
 
 	abstract protected void onPostSuccess(Result bitmap);
 	abstract protected void onPostError(Exception exception);

@@ -38,6 +38,7 @@ import com.climate.mirage.utils.ObjectFactory;
 import com.climate.mirage.utils.ObjectPool;
 
 import java.io.File;
+import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -149,7 +150,27 @@ public class Mirage {
     }
 
 	public MirageRequest load(String uri) {
+		if (TextUtils.isEmpty(uri)) return load((Uri)null);
 		return load(Uri.parse(uri));
+	}
+
+	public MirageRequest load(File file) {
+		if (file == null) return load((Uri)null);
+		return load(Uri.fromFile(file));
+	}
+
+	/**
+	 * Method for loading from the drawables folders
+	 * @param resId
+	 * @return
+	 */
+	public MirageRequest load(@AnyRes int resId) {
+		Resources res = applicationContext.getResources();
+		Uri uri = Uri.parse(SCHEME_ANDROID_RESOURCE +
+				"://" + res.getResourcePackageName(resId)
+				+ '/' + res.getResourceTypeName(resId)
+				+ '/' + res.getResourceEntryName(resId));
+		return load(uri);
 	}
 
 	/**
@@ -164,32 +185,16 @@ public class Mirage {
 	 */
 	public MirageRequest load(Uri uri) {
 		MirageRequest r = requestObjectPool.getObject();
-		if (uri.getScheme().startsWith(SCHEME_FILE) ||
-                uri.getScheme().startsWith(SCHEME_ANDROID_RESOURCE) ) {
-			r.diskCacheStrategy(DiskCacheStrategy.RESULT);
+		String scheme = uri != null ? uri.getScheme() : null;
+		if (!TextUtils.isEmpty(scheme)) {
+			if (scheme.startsWith(SCHEME_FILE) ||
+					scheme.startsWith(SCHEME_ANDROID_RESOURCE)) {
+				r.diskCacheStrategy(DiskCacheStrategy.RESULT);
+			}
 		}
 		return r.mirage(this).uri(uri);
 	}
-
-	public MirageRequest load(File file) {
-		return load(Uri.fromFile(file));
-	}
-
-
-    /**
-     * Method for loading from the drawables folders
-     * @param resId
-     * @return
-     */
-	public MirageRequest load(@AnyRes int resId) {
-        Resources res = applicationContext.getResources();
-        Uri uri = Uri.parse(SCHEME_ANDROID_RESOURCE +
-                "://" + res.getResourcePackageName(resId)
-                + '/' + res.getResourceTypeName(resId)
-                + '/' + res.getResourceEntryName(resId));
-        return load(uri);
-    }
-
+	
 	/**
 	 * Fires off the loading asynchronous. Mostly likely you will not access this directly
 	 * but instead go through {@link com.climate.mirage.targets.ImageViewTarget#go()}
@@ -294,7 +299,7 @@ public class Mirage {
 	 * @return the loaded resource
 	 */
     @WorkerThread
-	public Bitmap goSync(MirageRequest request) throws MirageIOException {
+	public Bitmap goSync(MirageRequest request) throws MirageIOException, InterruptedIOException {
 		if (isMainThread()) throw new NetworkOnMainThreadException();
 		if (request.target() != null) throw new IllegalArgumentException("goSync does not allow for callbacks");
 
