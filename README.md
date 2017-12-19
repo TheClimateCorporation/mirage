@@ -103,7 +103,7 @@ Credits
 --------
 Pablo Picasso is attributed to saying "good artists borrow, great artists steal."
 Mirage shamelessly steals from EssentialsLoader, Picasso, Glide, and the DiskCache
-and utils Jack Wharton pulled from the Android framework.
+and utils Jake Wharton pulled from the Android framework.
 
 
 
