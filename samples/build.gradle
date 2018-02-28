@@ -1,13 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "25.0.2"
-
+    compileSdkVersion COMPILE_SDK_VER
     defaultConfig {
         applicationId "com.climate.mirage.app"
-        minSdkVersion 14
-        targetSdkVersion 22
+        minSdkVersion MIN_SDK_VER
+        targetSdkVersion TARGET_SDK_VER
         versionCode 1
         versionName "1.0"
     }
@@ -40,9 +38,10 @@ android {
 }
 
 dependencies {
-    compile project(":library")
-    compile 'com.android.support:support-v13:22.2.1'
+    implementation project(":library")
+    implementation "com.android.support:appcompat-v7:$ANDROID_SUPPORT_VER"
+    implementation "com.android.support:support-v13:$ANDROID_SUPPORT_VER"
 
-    compile 'com.squareup.okhttp:okhttp:2.1.0'
-    compile 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
+    implementation 'com.squareup.okhttp:okhttp:2.1.0'
+    implementation 'com.squareup.okhttp:okhttp-urlconnection:2.1.0'
 }
