@@ -3,7 +3,7 @@ package com.climate.mirage.cache.disk.writers;
 import android.content.Context;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -18,9 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class InputStreamWriterTest {
+public class InputStreamWriterTest extends RobolectricTest {
 
 	@Before
 	public void setUp() throws Exception {

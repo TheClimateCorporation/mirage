@@ -2,7 +2,7 @@ package com.climate.mirage.exceptions;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -10,9 +10,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class OutOfMemoryExceptionTest {
+public class OutOfMemoryExceptionTest extends RobolectricTest {
 
     @Test
     public void testConstructors() throws Exception {

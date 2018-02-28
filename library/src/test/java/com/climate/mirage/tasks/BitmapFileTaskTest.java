@@ -6,7 +6,7 @@ import android.net.Uri;
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.disk.DiskCache;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
@@ -33,9 +33,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class BitmapFileTaskTest {
+public class BitmapFileTaskTest extends RobolectricTest {
 
     private AtomicBoolean wait;
     private File testingFile;

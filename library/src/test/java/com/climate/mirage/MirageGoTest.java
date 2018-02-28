@@ -30,9 +30,7 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class MirageGoTest {
+public class MirageGoTest extends RobolectricTest {
 
     private MockWebServer mockWebServer;
     private URL baseUrl;

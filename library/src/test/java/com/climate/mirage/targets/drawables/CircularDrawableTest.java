@@ -9,7 +9,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -18,9 +18,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.robolectric.annotation.Config;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class CircularDrawableTest {
+public class CircularDrawableTest extends RobolectricTest {
 
     @Test
     public void testDrawable() {

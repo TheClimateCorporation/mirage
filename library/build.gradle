@@ -7,6 +7,18 @@ jacoco {
 }
 
 android {
+    compileSdkVersion COMPILE_SDK_VER
+    defaultConfig {
+        minSdkVersion MIN_SDK_VER
+        targetSdkVersion TARGET_SDK_VER
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    lintOptions {
+        abortOnError false
+    }
 
     packagingOptions {
         exclude 'LICENSE.txt'
@@ -14,20 +26,6 @@ android {
 
     testOptions {
         unitTests.returnDefaultValues = true
-    }
-
-    compileSdkVersion 21 // roboelectric doesn't allow higher than 21 right now
-    buildToolsVersion "25.0.2"
-
-    defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 21
-        versionCode 1
-        versionName "1.0"
-    }
-
-    lintOptions {
-        abortOnError false
     }
 
     buildTypes {
@@ -42,14 +40,15 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:22.2.1'
-    compile 'com.android.support:appcompat-v7:22.2.1' // for the LruCache
-    compile 'com.android.support:support-annotations:22.2.1'
+    implementation "com.android.support:support-v4:$ANDROID_SUPPORT_VER"
+    implementation "com.android.support:appcompat-v7:$ANDROID_SUPPORT_VER" // for the LruCache
+    implementation "com.android.support:support-annotations:$ANDROID_SUPPORT_VER"
 
-    testCompile 'com.squareup.okhttp:mockwebserver:2.1.0'
-    testCompile 'junit:junit:4.12'
-    testCompile "org.mockito:mockito-core:1.9.5"
-    testCompile "org.robolectric:robolectric:3.0-rc2"
+    testImplementation 'com.squareup.okhttp:mockwebserver:2.1.0'
+    testImplementation 'junit:junit:4.12'
+    testImplementation "org.mockito:mockito-core:1.9.5"
+//    testImplementation "org.robolectric:robolectric:3.0-rc2"
+    testImplementation 'org.robolectric:robolectric:3.7.1'
 }
 
 

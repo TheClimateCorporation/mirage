@@ -2,7 +2,7 @@ package com.climate.mirage.utils;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.CoverageUtil;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,9 +12,7 @@ import org.robolectric.annotation.Config;
 import java.io.IOException;
 import java.io.InputStream;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class IOUtilsTest {
+public class IOUtilsTest extends RobolectricTest {
 
     @Test
     public void testHandlesNull() throws Exception {

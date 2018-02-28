@@ -8,7 +8,7 @@ import android.widget.ImageView;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.SimpleKeyMaker;
 import com.climate.mirage.cache.disk.DiskCache;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
@@ -29,9 +29,7 @@ import org.robolectric.annotation.Config;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class MirageRequestTest {
+public class MirageRequestTest extends RobolectricTest {
 
     @Test
     public void testRecycles() {

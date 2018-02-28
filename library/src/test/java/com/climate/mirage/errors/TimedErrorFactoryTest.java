@@ -2,7 +2,7 @@ package com.climate.mirage.errors;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -12,9 +12,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class TimedErrorFactoryTest {
+public class TimedErrorFactoryTest extends RobolectricTest {
 
     @Test
     public void testCreatesLog() {

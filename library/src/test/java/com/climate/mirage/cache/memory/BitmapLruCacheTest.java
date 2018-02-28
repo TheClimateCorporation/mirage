@@ -3,7 +3,7 @@ package com.climate.mirage.cache.memory;
 import android.graphics.Bitmap;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -11,9 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class BitmapLruCacheTest {
+public class BitmapLruCacheTest extends RobolectricTest {
 
 	private static final int DEFAULT_SIZE = 15 * 1024 * 1024;
 

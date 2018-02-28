@@ -1,19 +1,30 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
+        google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.0'
+        classpath 'com.android.tools.build:gradle:3.0.1'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.4.1'
     }
 }
 
 apply plugin: 'maven'
 
+ext {
+    // google libs
+    ANDROID_SUPPORT_VER = "26.1.0"
+
+    // build env
+    COMPILE_SDK_VER = 26
+    TARGET_SDK_VER = 26
+    MIN_SDK_VER = 14
+}
+
 allprojects {
     repositories {
-        mavenLocal()
+        google()
         jcenter()
         mavenCentral()
     }

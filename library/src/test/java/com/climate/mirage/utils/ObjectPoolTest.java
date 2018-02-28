@@ -1,7 +1,7 @@
 package com.climate.mirage.utils;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.requests.MirageRequest;
 
 import junit.framework.Assert;
@@ -14,9 +14,7 @@ import org.robolectric.annotation.Config;
 import java.lang.reflect.Field;
 import java.util.List;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class ObjectPoolTest {
+public class ObjectPoolTest extends RobolectricTest {
 
     @Test
     public void testGetsObject() throws Exception {

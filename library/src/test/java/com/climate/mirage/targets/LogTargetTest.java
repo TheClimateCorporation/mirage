@@ -2,7 +2,7 @@ package com.climate.mirage.targets;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.requests.MirageRequest;
 
 import org.junit.Test;
@@ -13,9 +13,7 @@ import org.robolectric.annotation.Config;
 import java.io.File;
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class LogTargetTest {
+public class LogTargetTest extends RobolectricTest {
 
     @Test
     public void testThingsOk() {

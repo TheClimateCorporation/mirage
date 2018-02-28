@@ -16,9 +16,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class LoadErrorManagerTest {
+public class LoadErrorManagerTest extends RobolectricTest {
 
     @Before
     public void setUp() {

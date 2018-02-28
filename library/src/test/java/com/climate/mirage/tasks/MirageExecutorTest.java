@@ -1,7 +1,7 @@
 package com.climate.mirage.tasks;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -13,9 +13,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class MirageExecutorTest {
+public class MirageExecutorTest extends RobolectricTest {
 
     @Before
     public void setUp() throws IOException {
