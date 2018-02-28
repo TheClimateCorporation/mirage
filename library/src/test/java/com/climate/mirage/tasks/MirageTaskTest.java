@@ -7,7 +7,7 @@ import android.util.Log;
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
@@ -32,9 +32,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class MirageTaskTest {
+public class MirageTaskTest extends RobolectricTest {
 
     private MockWebServer mockWebServer;
     private URL baseUrl;

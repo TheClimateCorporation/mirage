@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -21,9 +21,7 @@ import org.robolectric.shadows.ShadowBitmapFactory;
 import java.io.File;
 import java.io.OutputStream;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class BitmapWriterTest {
+public class BitmapWriterTest extends RobolectricTest {
 
 	@Before
 	public void setUp() throws Exception {

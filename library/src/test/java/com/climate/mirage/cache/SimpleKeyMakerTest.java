@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
 
@@ -15,9 +15,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.annotation.Config;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class SimpleKeyMakerTest {
+public class SimpleKeyMakerTest extends RobolectricTest {
 
 	@Test
 	public void testMakesKey() throws Exception {

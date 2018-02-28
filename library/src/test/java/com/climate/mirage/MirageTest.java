@@ -34,9 +34,7 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class MirageTest {
+public class MirageTest extends RobolectricTest {
 
     @Before
     public void setUp() {

@@ -7,7 +7,7 @@ import android.util.Log;
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.disk.DiskCache;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
@@ -36,9 +36,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class BitmapUrlTaskTest {
+public class BitmapUrlTaskTest extends RobolectricTest {
 
     private MockWebServer mockWebServer;
     private URL baseUrl;

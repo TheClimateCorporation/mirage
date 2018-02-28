@@ -9,7 +9,7 @@ import android.widget.TextView;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.requests.MirageRequest;
 
 import junit.framework.Assert;
@@ -21,9 +21,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class TextViewTargetTest {
+public class TextViewTargetTest extends RobolectricTest {
 
     @Test
     public void testTextViewTarget() {

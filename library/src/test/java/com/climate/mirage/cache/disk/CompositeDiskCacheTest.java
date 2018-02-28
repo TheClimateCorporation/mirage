@@ -3,7 +3,7 @@ package com.climate.mirage.cache.disk;
 import android.content.Context;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -15,9 +15,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.File;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class CompositeDiskCacheTest {
+public class CompositeDiskCacheTest extends RobolectricTest {
 
 	@Test
 	public void testCompositeInsertsToAllCaches() {

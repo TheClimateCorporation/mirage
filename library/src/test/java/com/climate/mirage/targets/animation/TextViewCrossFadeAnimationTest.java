@@ -7,7 +7,7 @@ import android.widget.TextView;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -16,9 +16,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.robolectric.annotation.Config;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class TextViewCrossFadeAnimationTest {
+public class TextViewCrossFadeAnimationTest extends RobolectricTest {
 
     @Test
     public void testImageViewTarget() {

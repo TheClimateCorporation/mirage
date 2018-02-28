@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.disk.writers.BitmapWriter;
 
 import junit.framework.Assert;
@@ -19,9 +19,7 @@ import org.robolectric.annotation.Config;
 import java.io.File;
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class DiskLruCacheWrapperTest {
+public class DiskLruCacheWrapperTest extends RobolectricTest {
 
 	@Before
 	public void setUp() throws Exception {

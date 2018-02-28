@@ -3,7 +3,7 @@ package com.climate.mirage.load;
 import android.net.Uri;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -21,9 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class SimpleUrlConnectionFactoryTest {
+public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
 
     private MockWebServer mockWebServer;
     private URL baseUrl;

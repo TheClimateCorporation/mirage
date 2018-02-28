@@ -6,7 +6,7 @@ import android.os.Build;
 import android.support.v4.util.LruCache;
 
 import com.climate.mirage.BuildConfig;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 
 import junit.framework.Assert;
 
@@ -16,9 +16,7 @@ import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class LruCacheAdapterTest {
+public class LruCacheAdapterTest extends RobolectricTest {
 
 	private static final int DEFAULT_SIZE = 15 * 1024 * 1024;
 

@@ -11,7 +11,7 @@ import android.widget.ImageView;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.Mirage;
-import com.climate.mirage.RoboManifestRunner;
+import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.targets.drawables.DrawableFactory;
 import com.climate.mirage.tasks.MirageTask;
@@ -27,9 +27,7 @@ import org.robolectric.annotation.Config;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@RunWith(RoboManifestRunner.class)
-@Config(constants = BuildConfig.class)
-public class ViewTargetTest {
+public class ViewTargetTest extends RobolectricTest {
     
     @Test
     public void testGo() {
