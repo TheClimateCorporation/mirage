@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -15,7 +16,6 @@ import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
 import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.load.BitmapProvider;
-import com.climate.mirage.load.StreamProvider;
 import com.climate.mirage.load.UrlFactory;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.processors.ResizeProcessor;
@@ -69,8 +69,6 @@ public class MirageRequest {
 	private ResizeProcessor resizeProcessor;
     private int resizeTargetDimen = -1;
     private boolean resizeSampleUndershoot = false;
-    // TODO: I really need to abstract this so it's just 1 object....
-	private StreamProvider streamProvider;
 	private BitmapProvider bitmapProvider;
 
 
@@ -108,9 +106,10 @@ public class MirageRequest {
 		if (resizeProcessor != null) {
 			resizeProcessor.setDimensions(0, 0, ResizeProcessor.STRATEGY_SCALE_FREE);
 		}
-		streamProvider = null;
+        bitmapProvider = null;
 	}
 
+	@Nullable
 	public Uri uri() {
 		return uri;
 	}
@@ -127,13 +126,13 @@ public class MirageRequest {
 		return this;
 	}
 
-	public MirageRequest provider(StreamProvider provider) {
-		this.streamProvider = provider;
+	public MirageRequest provider(BitmapProvider provider) {
+		this.bitmapProvider = provider;
 		return this;
 	}
 
-	public StreamProvider provider() {
-	    return streamProvider;
+	public BitmapProvider provider() {
+	    return bitmapProvider;
     }
 
 	public MirageRequest mirage(Mirage mirage) {

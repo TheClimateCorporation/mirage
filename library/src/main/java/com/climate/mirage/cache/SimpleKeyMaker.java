@@ -10,14 +10,15 @@ public class SimpleKeyMaker implements KeyMaker {
 	@Override
 	public String getSourceKey(MirageRequest request) {
 		StringBuilder b = new StringBuilder();
-		b.append(request.uri().toString().hashCode());
+		b.append(request.provider().id().hashCode());
 		return Integer.toHexString(b.toString().hashCode());
 	}
 
 	@Override
 	public String getResultKey(MirageRequest request) {
 		StringBuilder b = new StringBuilder();
-		b.append(request.uri().toString().hashCode());
+        b.append(request.provider().id().hashCode());
+//        b.append(request.uri().toString().hashCode());
 
         if (request.isInSampleSizeDynamic()) {
             b.append("_size");

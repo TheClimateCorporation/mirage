@@ -29,6 +29,7 @@
         <activity android:label="Drawable Load" android:name=".DrawableLoadActivity" />
         <activity android:label="TextView Drawable Sample" android:name=".TextViewActivity" />
         <activity android:label="Custom Drawable" android:name=".CustomDrawableActivity" />
+        <activity android:label="Custom Bitmap" android:name=".CustomBitmapActivity" />
         <activity android:label="Load and Cancel" android:name=".LoadAndCancelActivity" />
         <activity android:label="Load from Content Resolver" android:name=".ContentResolverLoadActivity" />
         <activity android:label="Load from File" android:name=".FileLoadActivity" />

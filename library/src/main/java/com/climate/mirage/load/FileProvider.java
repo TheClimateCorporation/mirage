@@ -7,22 +7,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class FileProvider implements StreamProvider {
+public class FileProvider extends SavingStreamProvider {
 
     private MirageRequest request;
-    private File file;
 
     public FileProvider(MirageRequest request) {
+        super(request);
         this.request = request;
     }
 
-    public FileProvider(File file) {
-        this.file = file;
-    }
-
     @Override
-    public InputStream load() throws IOException {
-        File f = file != null ? file : new File(request.uri().getPath());
+    public InputStream stream() throws IOException {
+        File f = new File(request.uri().getPath());
         InputStream in = new FileInputStream(f);
         return in;
     }

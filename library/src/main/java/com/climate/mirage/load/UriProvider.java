@@ -7,17 +7,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
 
-public class UriProvider implements StreamProvider {
+public class UriProvider extends SavingStreamProvider {
 
     private final MirageRequest request;
     private static final int IO_BUFFER_SIZE = 8 * 1024;
 
     public UriProvider(MirageRequest request) {
+        super(request);
         this.request = request;
     }
 
     @Override
-    public InputStream load() throws IOException {
+    protected InputStream stream() throws IOException {
         URLConnection connection = getConnection();
         InputStream in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);
         return in;

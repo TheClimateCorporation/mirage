@@ -15,7 +15,6 @@ import com.climate.mirage.exceptions.MirageException;
 import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.exceptions.MirageOomException;
 import com.climate.mirage.load.BitmapProvider;
-import com.climate.mirage.load.StreamProvider;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.utils.IOUtils;
@@ -35,7 +34,6 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 	private MirageRequest request;
 	private LoadErrorManager loadErrorManager;
 	private Mirage.Source source;
-	private StreamProvider streamProvider;
 	private BitmapProvider bitmapProvider;
 
     /**
@@ -55,7 +53,7 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 		this.mirage = mirage;
 		this.request = request;
 		this.loadErrorManager = loadErrorManager;
-		this.streamProvider = request.provider();
+		this.bitmapProvider = request.provider();
 	}
 
 	private Bitmap checkMemoryAndSave() {
@@ -122,12 +120,12 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 		// error log
 		if (!isTaskCancelled()) {
 			// make sure the url isn't in the cached errors
-			LoadError loadError = loadErrorManager.getLoadError(request.uri());
+			LoadError loadError = loadErrorManager.getLoadError(request.provider().id());
 			if (loadError != null) {
 				if (loadError.isValid()) {
 					throw new MirageIOException(Mirage.Source.MEMORY, loadError.getException());
 				} else {
-					loadErrorManager.removeLoadError(request.uri());
+					loadErrorManager.removeLoadError(request.provider().id());
 				}
 			}
 		}
@@ -135,27 +133,18 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 		// we have to get this image from the network, let's go!
 		if (!isTaskCancelled()) {
 			try {
-			    // is we need to dynamically add the sample size
-                // this is only for a streamProvider
-                if (streamProvider != null && request.isInSampleSizeDynamic()) {
-                    BitmapFactory.Options opts = new BitmapFactory.Options();
-                    opts.inJustDecodeBounds = true;
-                    InputStream in = createInputStreamForExternal();
-                    BitmapFactory.decodeStream(in, null, opts);
-                    int sampleSize = determineSampleSize(opts);
-                    request.inSampleSize(sampleSize);
-                }
-
                 // get the bitmap from a provider
                 // and retry if there's a out of memory error
+                // TODO: move this down into the provider
 				if (isTaskCancelled()) return null;
 				try {
-					bitmap = loadFromProvider();
+					bitmap = bitmapProvider.load();
 				} catch (OutOfMemoryError e) {
                     if (request.memoryCache() != null) request.memoryCache().clear();
                     System.gc();
                     try {
-                        bitmap = loadFromProvider();
+                        // TODO: this should not get the bounds again
+                        bitmap = bitmapProvider.load();
                     } catch (OutOfMemoryError e2) {
                         // give up
                         throw new MirageOomException(Mirage.Source.EXTERNAL);
@@ -175,10 +164,10 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 				if (isTaskCancelled()) return null; // no error we just stopped loading it
 				else throw new MirageIOException(Mirage.Source.EXTERNAL, e);
 			} catch (IOException e) {
-				loadErrorManager.addLoadError(request.uri(), e, Mirage.Source.EXTERNAL);
+				loadErrorManager.addLoadError(request.provider().id(), e, Mirage.Source.EXTERNAL);
 				throw new MirageIOException(Mirage.Source.EXTERNAL, e);
 			} catch (Exception e) {
-				loadErrorManager.addLoadError(request.uri(), e, Mirage.Source.EXTERNAL);
+				loadErrorManager.addLoadError(request.provider().id(), e, Mirage.Source.EXTERNAL);
 				throw new MirageIOException(Mirage.Source.EXTERNAL, e);
 			}
 
@@ -196,59 +185,9 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 	}
 
     private int determineSampleSize(BitmapFactory.Options outOpts) {
-        int dimen = Math.max(outOpts.outWidth, outOpts.outHeight);
-        float div = dimen / (float)request.getResizeTargetDimen();
-		if (div < 1) return 1;
-        if (request.isResizeSampleUndershoot()) {
-            int sampleSize = MathUtils.upperPowerof2((int)div);
-            return sampleSize;
-        } else {
-            int sampleSize = MathUtils.lowerPowerOf2((int)div);
-            return sampleSize;
-        }
-    }
-
-    private InputStream createInputStreamForExternal() throws IOException {
-	    return streamProvider.load();
-    }
-
-    private Bitmap loadFromProvider() throws IOException {
-	    if (streamProvider != null) return loadAndSaveFromStreamProvider();
-	    else return loadAndSaveFromBitmapProvider();
-    }
-
-    private Bitmap loadAndSaveFromBitmapProvider() throws IOException {
-        Bitmap bitmap = bitmapProvider.load();
-        if (isSaveSource()) {
-            request.diskCache().put(request.getSourceKey(), new BitmapWriter(bitmap));
-        }
-        return bitmap;
-    }
-
-    private Bitmap loadAndSaveFromStreamProvider() throws IOException {
-        Bitmap bitmap = null;
-        InputStream in = createInputStreamForExternal();
-
-        // if we need to keep the source, stream it directly to a file
-        // we can't load it to memory first and then write to file because
-        // there could be bitmap options on the stream.
-        if (isSaveSource()) {
-            request.diskCache().put(request.getSourceKey(), new InputStreamWriter(in));
-            IOUtils.close(in);
-            File file = request.diskCache().get(request.getSourceKey());
-            if (file != null) {
-                bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), request.options());
-            }
-        } else {
-            bitmap = BitmapFactory.decodeStream(in, request.outPadding(), request.options());
-            IOUtils.close(in);
-        }
-
-        return bitmap;
-    }
-
-    private boolean isSaveSource() {
-        return request.isRequestShouldSaveSource();
+        int sampleSize  = MathUtils.determineSampleSize(outOpts.outWidth, outOpts.outHeight,
+                request.getResizeTargetDimen(), request.isResizeSampleUndershoot());
+        return sampleSize;
     }
 
 	@Override

@@ -13,18 +13,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
 
-public class ContentUriProvider implements StreamProvider {
+public class ContentUriProvider extends SavingStreamProvider {
 
     private final MirageRequest request;
     private final Context context;
 
     public ContentUriProvider(Context context, MirageRequest request) {
+        super(request);
         this.request = request;
         this.context = context;
     }
 
     @Override
-    public InputStream load() throws IOException {
+    public InputStream stream() throws IOException {
         InputStream in = context.getContentResolver().openInputStream(request.uri());
         return in;
     }

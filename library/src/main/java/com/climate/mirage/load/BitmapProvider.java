@@ -9,4 +9,6 @@ public interface BitmapProvider {
 
     Bitmap load() throws IOException;
 
+    String id();
+
 }

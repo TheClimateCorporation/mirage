@@ -7,6 +7,6 @@ import java.net.URLConnection;
 
 public interface UrlFactory {
 
-	public URLConnection getConnection(Uri uri) throws IOException;
+	URLConnection getConnection(Uri uri) throws IOException;
 
 }

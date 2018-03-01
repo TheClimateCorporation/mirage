@@ -26,7 +26,6 @@ import com.climate.mirage.load.BitmapProvider;
 import com.climate.mirage.load.ContentUriProvider;
 import com.climate.mirage.load.FileProvider;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
-import com.climate.mirage.load.StreamProvider;
 import com.climate.mirage.load.UriProvider;
 import com.climate.mirage.load.UrlFactory;
 import com.climate.mirage.requests.MirageRequest;
@@ -47,7 +46,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.stream.Stream;
 
 import static android.content.ContentResolver.SCHEME_ANDROID_RESOURCE;
 import static android.content.ContentResolver.SCHEME_CONTENT;
@@ -177,7 +175,7 @@ public class Mirage {
 		return load(uri);
 	}
 
-    public MirageRequest load(StreamProvider provider) {
+    public MirageRequest load(BitmapProvider provider) {
         MirageRequest r = load((Uri)null);
         return r.provider(provider);
     }
@@ -194,6 +192,7 @@ public class Mirage {
 	 */
 	public MirageRequest load(Uri uri) {
 		MirageRequest r = requestObjectPool.getObject();
+        r.mirage(this);
 		if (uri == null || TextUtils.isEmpty(uri.toString())) {
 		    return r;
         }
@@ -210,7 +209,7 @@ public class Mirage {
 			}
 		}
 
-		StreamProvider provider;
+        BitmapProvider provider;
         if (scheme.startsWith(SCHEME_FILE)) {
 		    provider = new FileProvider(r);
         } else if (scheme.startsWith(SCHEME_CONTENT) ||
@@ -219,7 +218,7 @@ public class Mirage {
         } else {
             provider = new UriProvider(r);
         }
-        r.mirage(this).uri(uri);
+        r.uri(uri);
 		r.provider(provider);
 		return r;
 	}
@@ -273,13 +272,16 @@ public class Mirage {
             return null;
         }
 
+        // TODO: clean up this duplicate
         if (request.memoryCache() == null) request.memoryCache(defaultMemoryCache);
         if (request.diskCache() == null) request.diskCache(defaultDiskCache);
         if (request.executor() == null) request.executor(defaultExecutor);
         if (request.urlFactory() == null) request.urlFactory(defaultUrlConnectionFactory);
 
         // if the url is blank, fault out immediately
-        if (request.uri() == null || TextUtils.isEmpty(request.uri().toString())) {
+        // TODO: clean up this duplicate
+        if ((request.uri() == null || TextUtils.isEmpty(request.uri().toString()))
+                && request.provider() == null) {
             if (request.target() != null) request.target().onError(
                     new IllegalArgumentException("Uri is null"), Source.MEMORY,
                     request);
@@ -300,7 +302,7 @@ public class Mirage {
         }
 
         // Check immediately if the resource is in the error cache
-        LoadError error = getLoadError(request.uri());
+        LoadError error = getLoadError(request.provider().id());
         if (error != null && error.isValid()) {
             if (request.target() != null) request.target().onError(error.getException(),
                     Source.MEMORY, request);
@@ -529,8 +531,8 @@ public class Mirage {
 		return Looper.myLooper() == Looper.getMainLooper();
 	}
 
-	private LoadError getLoadError(Uri uri) {
-		return loadErrorManager.getLoadError(uri);
+	private LoadError getLoadError(String id) {
+		return loadErrorManager.getLoadError(id);
 	}
 
 	private void addRequestToList(MirageRequest request, MirageTask task) {
