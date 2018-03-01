@@ -22,15 +22,18 @@ import com.climate.mirage.cache.memory.BitmapLruCache;
 import com.climate.mirage.cache.memory.MemoryCache;
 import com.climate.mirage.errors.LoadError;
 import com.climate.mirage.exceptions.MirageIOException;
+import com.climate.mirage.load.BitmapProvider;
+import com.climate.mirage.load.ContentUriProvider;
+import com.climate.mirage.load.FileProvider;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
+import com.climate.mirage.load.StreamProvider;
+import com.climate.mirage.load.UriProvider;
 import com.climate.mirage.load.UrlFactory;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.targets.Target;
 import com.climate.mirage.targets.ViewTarget;
-import com.climate.mirage.tasks.BitmapContentUriTask;
 import com.climate.mirage.tasks.BitmapDownloadTask;
-import com.climate.mirage.tasks.BitmapFileTask;
-import com.climate.mirage.tasks.BitmapUrlTask;
+import com.climate.mirage.tasks.BitmapTask2;
 import com.climate.mirage.tasks.MirageExecutor;
 import com.climate.mirage.tasks.MirageTask;
 import com.climate.mirage.utils.ActivityLifecycleStub;
@@ -44,6 +47,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.stream.Stream;
 
 import static android.content.ContentResolver.SCHEME_ANDROID_RESOURCE;
 import static android.content.ContentResolver.SCHEME_CONTENT;
@@ -156,7 +160,7 @@ public class Mirage {
 
 	public MirageRequest load(File file) {
 		if (file == null) return load((Uri)null);
-		return load(Uri.fromFile(file));
+        return load(Uri.fromFile(file));
 	}
 
 	/**
@@ -173,6 +177,11 @@ public class Mirage {
 		return load(uri);
 	}
 
+    public MirageRequest load(StreamProvider provider) {
+        MirageRequest r = load((Uri)null);
+        return r.provider(provider);
+    }
+
 	/**
 	 * The URI of the asset to load. Types of Uri's supported include
 	 * http, https, file, and content
@@ -185,14 +194,34 @@ public class Mirage {
 	 */
 	public MirageRequest load(Uri uri) {
 		MirageRequest r = requestObjectPool.getObject();
-		String scheme = uri != null ? uri.getScheme() : null;
+		if (uri == null || TextUtils.isEmpty(uri.toString())) {
+		    return r;
+        }
+
+		String scheme = uri.getScheme();
+
+		// if this is a file or content resource, no need to cache all.
+        // default to just caching the result
 		if (!TextUtils.isEmpty(scheme)) {
 			if (scheme.startsWith(SCHEME_FILE) ||
-					scheme.startsWith(SCHEME_ANDROID_RESOURCE)) {
+					scheme.startsWith(SCHEME_ANDROID_RESOURCE) ||
+                    scheme.startsWith(SCHEME_CONTENT)) {
 				r.diskCacheStrategy(DiskCacheStrategy.RESULT);
 			}
 		}
-		return r.mirage(this).uri(uri);
+
+		StreamProvider provider;
+        if (scheme.startsWith(SCHEME_FILE)) {
+		    provider = new FileProvider(r);
+        } else if (scheme.startsWith(SCHEME_CONTENT) ||
+                scheme.startsWith(SCHEME_ANDROID_RESOURCE)) {
+            provider = new ContentUriProvider(applicationContext, r);
+        } else {
+            provider = new UriProvider(r);
+        }
+        r.mirage(this).uri(uri);
+		r.provider(provider);
+		return r;
 	}
 	
 	/**
@@ -219,22 +248,15 @@ public class Mirage {
         cancelRequest(request.target());
 
         // if the url is blank, fault out immediately
-        if (request.uri() == null || TextUtils.isEmpty(request.uri().toString())) {
+        if ((request.uri() == null || TextUtils.isEmpty(request.uri().toString()))
+                && request.provider() == null) {
             if (request.target() != null) request.target().onError(
                     new IllegalArgumentException("Uri is null"), Source.MEMORY,
                     request);
             return null;
         }
 
-        MirageTask<Void, Void, Bitmap> task;
-        if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
-            task = new BitmapFileTask(this, request, loadErrorManager, bitmapGoTaskCallback);
-        } else if (request.uri().getScheme().startsWith(SCHEME_CONTENT) ||
-                request.uri().getScheme().startsWith(SCHEME_ANDROID_RESOURCE)) {
-            task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, bitmapGoTaskCallback);
-        } else {
-            task = new BitmapUrlTask(this, request, loadErrorManager, bitmapGoTaskCallback);
-        }
+        MirageTask<Void, Void, Bitmap> task = new BitmapTask2(this, request, loadErrorManager, bitmapGoTaskCallback);
         addRequestToList(request, task);
         return task;
     }
@@ -310,15 +332,8 @@ public class Mirage {
 
         cancelRequest(request.target());
 
-        MirageTask<Void, Void, Bitmap> task;
-        if (request.uri().getScheme().startsWith(SCHEME_FILE)) {
-            task = new BitmapFileTask(this, request, loadErrorManager, null);
-        } else if (request.uri().getScheme().startsWith(SCHEME_CONTENT) ||
-                request.uri().getScheme().startsWith(SCHEME_ANDROID_RESOURCE)) {
-            task = new BitmapContentUriTask(applicationContext, this, request, loadErrorManager, null);
-        } else {
-            task = new BitmapUrlTask(this, request, loadErrorManager, null);
-        }
+        MirageTask<Void, Void, Bitmap> task = createGoTask(request);
+        if (task == null) return null;
 		Bitmap bitmap = task.doTask();
 		requestObjectPool.recycle(request);
 		return bitmap;
@@ -329,7 +344,7 @@ public class Mirage {
 	 * File reference and not a bitmap.
 	 *
 	 * @param request the configured request for the resource to load
-	 * @return The AsyncTask responsibile for running the request. It could be null if the resource is in the memory cache
+	 * @return The AsyncTask responsible for running the request. It could be null if the resource is in the memory cache
 	 */
 	public MirageTask downloadOnly(MirageRequest request) {
 		if (request.memoryCache() == null) request.memoryCache(defaultMemoryCache);
@@ -531,7 +546,7 @@ public class Mirage {
 		}
 	}
 
-	private BitmapUrlTask.Callback<Bitmap> bitmapGoTaskCallback = new BitmapUrlTask.Callback<Bitmap>() {
+	private BitmapTask2.Callback<Bitmap> bitmapGoTaskCallback = new BitmapTask2.Callback<Bitmap>() {
 		@Override
 		public void onCancel(MirageTask task, MirageRequest request) {
 			removeSavedTask(request, task);
