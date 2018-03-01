@@ -3,7 +3,9 @@ package com.climate.mirage.load;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.climate.mirage.Mirage;
 import com.climate.mirage.cache.disk.writers.InputStreamWriter;
+import com.climate.mirage.exceptions.MirageOomException;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.utils.IOUtils;
 import com.climate.mirage.utils.MathUtils;
@@ -26,6 +28,22 @@ abstract public class SavingStreamProvider implements BitmapProvider {
 
     @Override
     public Bitmap load() throws IOException {
+        Bitmap bitmap;
+        try {
+            bitmap = loadBitmap();
+        } catch (OutOfMemoryError e) {
+            if (request.memoryCache() != null) request.memoryCache().clear();
+            System.gc();
+            try {
+                bitmap = loadBitmap();
+            } catch (OutOfMemoryError e2) {
+                throw e2;
+            }
+        }
+        return bitmap;
+    }
+
+    private Bitmap loadBitmap() throws IOException {
         if (request.isInSampleSizeDynamic()) {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inJustDecodeBounds = true;

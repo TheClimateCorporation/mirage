@@ -32,7 +32,7 @@ import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.targets.Target;
 import com.climate.mirage.targets.ViewTarget;
 import com.climate.mirage.tasks.BitmapDownloadTask;
-import com.climate.mirage.tasks.BitmapTask2;
+import com.climate.mirage.tasks.BitmapTask;
 import com.climate.mirage.tasks.MirageExecutor;
 import com.climate.mirage.tasks.MirageTask;
 import com.climate.mirage.utils.ActivityLifecycleStub;
@@ -255,7 +255,7 @@ public class Mirage {
             return null;
         }
 
-        MirageTask<Void, Void, Bitmap> task = new BitmapTask2(this, request, loadErrorManager, bitmapGoTaskCallback);
+        MirageTask<Void, Void, Bitmap> task = new BitmapTask(this, request, loadErrorManager, bitmapGoTaskCallback);
         addRequestToList(request, task);
         return task;
     }
@@ -548,7 +548,7 @@ public class Mirage {
 		}
 	}
 
-	private BitmapTask2.Callback<Bitmap> bitmapGoTaskCallback = new BitmapTask2.Callback<Bitmap>() {
+	private BitmapTask.Callback<Bitmap> bitmapGoTaskCallback = new BitmapTask.Callback<Bitmap>() {
 		@Override
 		public void onCancel(MirageTask task, MirageRequest request) {
 			removeSavedTask(request, task);

@@ -9,7 +9,6 @@ import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.disk.writers.BitmapWriter;
-import com.climate.mirage.cache.disk.writers.InputStreamWriter;
 import com.climate.mirage.errors.LoadError;
 import com.climate.mirage.exceptions.MirageException;
 import com.climate.mirage.exceptions.MirageIOException;
@@ -17,19 +16,17 @@ import com.climate.mirage.exceptions.MirageOomException;
 import com.climate.mirage.load.BitmapProvider;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
-import com.climate.mirage.utils.IOUtils;
 import com.climate.mirage.utils.MathUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.List;
 
-public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
+public class BitmapTask extends MirageTask<Void, Void, Bitmap> {
 
-	private static final String TAG = BitmapTask2.class.getSimpleName();
+	private static final String TAG = BitmapTask.class.getSimpleName();
 	private Mirage mirage;
 	private MirageRequest request;
 	private LoadErrorManager loadErrorManager;
@@ -45,10 +42,10 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 	 *                 completed or canceled. If you want to do something with the result
 	 *                 use the callback in request
 	 */
-	public BitmapTask2(Mirage mirage,
-					   MirageRequest request,
-                       LoadErrorManager loadErrorManager,
-                       Callback<Bitmap> callback) {
+	public BitmapTask(Mirage mirage,
+                      MirageRequest request,
+                      LoadErrorManager loadErrorManager,
+                      Callback<Bitmap> callback) {
 		super(request, callback);
 		this.mirage = mirage;
 		this.request = request;
@@ -133,25 +130,12 @@ public class BitmapTask2 extends MirageTask<Void, Void, Bitmap> {
 		// we have to get this image from the network, let's go!
 		if (!isTaskCancelled()) {
 			try {
-                // get the bitmap from a provider
-                // and retry if there's a out of memory error
-                // TODO: move this down into the provider
-				if (isTaskCancelled()) return null;
 				try {
 					bitmap = bitmapProvider.load();
 				} catch (OutOfMemoryError e) {
-                    if (request.memoryCache() != null) request.memoryCache().clear();
-                    System.gc();
-                    try {
-                        // TODO: this should not get the bounds again
-                        bitmap = bitmapProvider.load();
-                    } catch (OutOfMemoryError e2) {
-                        // give up
-                        throw new MirageOomException(Mirage.Source.EXTERNAL);
-                    }
+                    throw new MirageOomException(Mirage.Source.EXTERNAL);
 				}
 				if (isTaskCancelled()) return null;
-
 				// apply any processes set to the bitmap
 				if (bitmap != null) bitmap = applyProcessors(bitmap);
 				if (isTaskCancelled()) return null;
