@@ -6,6 +6,7 @@ import android.net.Uri;
 
 import com.climate.mirage.BuildConfig;
 import com.climate.mirage.RobolectricTest;
+import com.climate.mirage.load.UriProvider;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
 
@@ -21,6 +22,7 @@ public class SimpleKeyMakerTest extends RobolectricTest {
 	public void testMakesKey() throws Exception {
 		MirageRequest request = new MirageRequest();
 		request.uri(Uri.parse("http://www.google.com"));
+		request.provider(new UriProvider(request));
 
 		SimpleKeyMaker keyMaker = new SimpleKeyMaker();
 		Assert.assertEquals("e5123341", keyMaker.getSourceKey(request));
@@ -31,6 +33,7 @@ public class SimpleKeyMakerTest extends RobolectricTest {
 	public void testSourceKeyWithModifiers() throws Exception {
 		MirageRequest request = new MirageRequest();
 		request.uri(Uri.parse("http://www.google.com"));
+        request.provider(new UriProvider(request));
 		request.addProcessor(new BitmapProcessor() {
 			@Override
 			public String getId() {
@@ -62,6 +65,7 @@ public class SimpleKeyMakerTest extends RobolectricTest {
 	public void testResultKeyWithModifiers() throws Exception {
 		MirageRequest request = new MirageRequest();
 		request.uri(Uri.parse("http://www.google.com"));
+        request.provider(new UriProvider(request));
 		request.addProcessor(new BitmapProcessor() {
 			@Override
 			public String getId() {
@@ -93,6 +97,7 @@ public class SimpleKeyMakerTest extends RobolectricTest {
 	public void testResultKeyWithModifiersAndOptions() throws Exception {
 		MirageRequest request = new MirageRequest();
 		request.uri(Uri.parse("http://www.google.com"));
+        request.provider(new UriProvider(request));
 		request.addProcessor(new BitmapProcessor() {
 			@Override
 			public String getId() {
