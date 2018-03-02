@@ -65,7 +65,7 @@ public class MirageGoTest extends RobolectricTest {
         LoadError loadError = Mockito.mock(LoadError.class);
         Mockito.when(loadError.isValid()).thenReturn(true);
         Mockito.when(loadError.getException()).thenReturn(new IOException("mocked"));
-        Mockito.when(loadErrorManager.getLoadError((Uri)Mockito.anyObject())).thenReturn(loadError);
+        Mockito.when(loadErrorManager.getLoadError(Mockito.anyString())).thenReturn(loadError);
         Target<Bitmap> target = Mockito.mock(Target.class);
 
         Mirage mirage = Mirage.get(RuntimeEnvironment.application);
@@ -78,7 +78,7 @@ public class MirageGoTest extends RobolectricTest {
         request.go();
 
         Mockito.verify(loadErrorManager, Mockito.times(1))
-                .getLoadError(Mockito.eq(request.uri()));
+                .getLoadError(Mockito.eq(request.provider().id()));
 
         Assert.assertEquals(0, mockWebServer.getRequestCount());
     }

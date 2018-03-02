@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.net.URLConnection;
 import java.util.List;
 
-// TODO: make this take the new approach
 public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 
 	private Mirage mirage;
