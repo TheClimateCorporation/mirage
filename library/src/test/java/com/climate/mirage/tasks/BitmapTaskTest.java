@@ -13,6 +13,7 @@ import com.climate.mirage.cache.disk.DiskCache;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
 import com.climate.mirage.errors.LoadError;
+import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
 import com.climate.mirage.processors.BitmapProcessor;
 import com.climate.mirage.requests.MirageRequest;
@@ -34,6 +35,7 @@ import org.robolectric.annotation.Config;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -366,49 +368,6 @@ public class BitmapTaskTest extends RobolectricTest {
         Mockito.verify(target, Mockito.times(1)).onResult(
                 (Bitmap) any(), Mockito.eq(Mirage.Source.EXTERNAL), Mockito.eq(request));
         Assert.assertEquals(1, mockWebServer.getRequestCount());
-
-
-        ///////////////////////
-//        Bitmap bm = Bitmap.createBitmap(600, 400, Bitmap.Config.ARGB_8888);
-//        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(toByteArray(bm)));
-//
-//
-//        Target<Bitmap> target = Mockito.mock(Target.class);
-//        MirageRequest request = Mockito.mock(MirageRequest.class);
-//        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-//        Mockito.when(request.memoryCache()).thenReturn(null);
-//        Mockito.when(request.diskCache()).thenReturn(diskCache);
-//        Mockito.when(request.isSkipReadingDiskCache()).thenReturn(true);
-//        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.RESULT);
-//        Mockito.when(request.getResultKey()).thenReturn("123");
-//        Mockito.when(request.getSourceKey()).thenReturn("1234");
-//        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-//        Mockito.when(request.target()).thenReturn(target);
-//
-//        LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
-//
-//        MirageTask.Callback<Bitmap> callback = new MirageTask.Callback<Bitmap>() {
-//            @Override
-//            public void onCancel(MirageTask task, MirageRequest request) {
-//                Assert.fail("Test shouldn't have canceled");
-//                wait.set(false);
-//            }
-//
-//            @Override
-//            public void onPostExecute(MirageTask task, MirageRequest request, Bitmap bitmap) {
-//                Assert.assertNotNull(bitmap);
-//                wait.set(false);
-//            }
-//        };
-//
-//        BitmapTask task = new BitmapTask(null, request, manager, callback);
-//        task.execute(); // can not executeOnExecutor or the text will never finish
-//        waitForIt();
-//        Mockito.verify(diskCache, Mockito.times(0)).get(Mockito.eq("123"));
-//        Mockito.verify(diskCache, Mockito.times(0)).get(Mockito.eq("1234"));
-//        Mockito.verify(target, Mockito.times(1)).onResult(
-//                (Bitmap) any(), Mockito.eq(Mirage.Source.EXTERNAL), Mockito.eq(request));
-//        Assert.assertEquals(1, mockWebServer.getRequestCount());
     }
 
     @Test
@@ -433,16 +392,13 @@ public class BitmapTaskTest extends RobolectricTest {
 
 
         Target<Bitmap> target = Mockito.mock(Target.class);
-        MirageRequest request = Mockito.mock(MirageRequest.class);
-        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-        Mockito.when(request.memoryCache()).thenReturn(null);
-        Mockito.when(request.diskCache()).thenReturn(diskCache);
-        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.SOURCE);
-        Mockito.when(request.getResultKey()).thenReturn("123");
-        Mockito.when(request.getSourceKey()).thenReturn("1234");
-        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-        Mockito.when(request.target()).thenReturn(target);
-        Mockito.when(request.isRequestShouldSaveSource()).thenReturn(true);
+        MirageRequest request = Mirage.get(getApp())
+                .load(baseUrl.toString())
+                .diskCache(diskCache)
+                .keyMaker(new EasyKeyMaker("123", "1234"))
+                .urlFactory(new SimpleUrlConnectionFactory())
+                .diskCacheStrategy(DiskCacheStrategy.RESULT);
+        request.into(target);
 
         LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
 
@@ -455,7 +411,6 @@ public class BitmapTaskTest extends RobolectricTest {
 
             @Override
             public void onPostExecute(MirageTask task, MirageRequest request, Bitmap bitmap) {
-                Assert.assertNotNull(bitmap);
                 wait.set(false);
             }
         };
@@ -463,9 +418,7 @@ public class BitmapTaskTest extends RobolectricTest {
         BitmapTask task = new BitmapTask(null, request, manager, callback);
         task.execute(); // can not executeOnExecutor or the text will never finish
         waitForIt();
-        // its called twice. first time is to check if it's in the cache.
-        // second time is to get the file it created to write to it.
-        Mockito.verify(diskCache, Mockito.times(2)).get(Mockito.eq("1234"));
+        Mockito.verify(diskCache, Mockito.times(1)).get(Mockito.eq("1234"));
         Mockito.verify(diskCache, Mockito.times(1)).put(Mockito.eq("1234"), (DiskCache.Writer) anyObject());
         Mockito.verify(target, Mockito.times(1)).onResult(
                 (Bitmap) any(), Mockito.eq(Mirage.Source.EXTERNAL), Mockito.eq(request));
@@ -492,18 +445,15 @@ public class BitmapTaskTest extends RobolectricTest {
             }
         }).when(diskCache).get(Mockito.eq("1234"));
 
-
         Target<Bitmap> target = Mockito.mock(Target.class);
-        MirageRequest request = Mockito.mock(MirageRequest.class);
-        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-        Mockito.when(request.memoryCache()).thenReturn(null);
-        Mockito.when(request.diskCache()).thenReturn(diskCache);
-        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.ALL);
-        Mockito.when(request.getResultKey()).thenReturn("1234");
-        Mockito.when(request.getSourceKey()).thenReturn("1234");
-        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-        Mockito.when(request.target()).thenReturn(target);
-        Mockito.when(request.isRequestShouldSaveSource()).thenReturn(true);
+        MirageRequest request = Mirage.get(getApp())
+                .load(baseUrl.toString())
+                .diskCache(diskCache)
+                .keyMaker(new EasyKeyMaker("1234", "1234"))
+                .skipReadingDiskCache(true)
+                .urlFactory(new SimpleUrlConnectionFactory())
+                .diskCacheStrategy(DiskCacheStrategy.ALL);
+        request.into(target);
 
         LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
 
@@ -516,7 +466,6 @@ public class BitmapTaskTest extends RobolectricTest {
 
             @Override
             public void onPostExecute(MirageTask task, MirageRequest request, Bitmap bitmap) {
-                Assert.assertNotNull(bitmap);
                 wait.set(false);
             }
         };
@@ -525,8 +474,6 @@ public class BitmapTaskTest extends RobolectricTest {
         task.execute(); // can not executeOnExecutor or the text will never finish
         waitForIt();
         Mockito.verify(diskCache, Mockito.times(1)).put(Mockito.eq("1234"), (DiskCache.Writer) anyObject());
-        Mockito.verify(target, Mockito.times(1)).onResult(
-                (Bitmap) any(), Mockito.eq(Mirage.Source.EXTERNAL), Mockito.eq(request));
         Assert.assertEquals(1, mockWebServer.getRequestCount());
     }
 
@@ -537,15 +484,14 @@ public class BitmapTaskTest extends RobolectricTest {
         DiskCache diskCache = Mockito.mock(DiskCache.class);
 
         Target<Bitmap> target = Mockito.mock(Target.class);
-        MirageRequest request = Mockito.mock(MirageRequest.class);
-        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-        Mockito.when(request.memoryCache()).thenReturn(null);
-        Mockito.when(request.diskCache()).thenReturn(diskCache);
-        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.RESULT);
-        Mockito.when(request.getResultKey()).thenReturn("123");
-        Mockito.when(request.getSourceKey()).thenReturn("1234");
-        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-        Mockito.when(request.target()).thenReturn(target);
+        MirageRequest request = Mirage.get(getApp())
+                .load(baseUrl.toString())
+                .diskCache(diskCache)
+                .keyMaker(new EasyKeyMaker("123", "1234"))
+                .skipReadingDiskCache(true)
+                .urlFactory(new SimpleUrlConnectionFactory())
+                .diskCacheStrategy(DiskCacheStrategy.RESULT);
+        request.into(target);
 
         LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
 
@@ -566,9 +512,8 @@ public class BitmapTaskTest extends RobolectricTest {
         BitmapTask task = new BitmapTask(null, request, manager, callback);
         task.execute(); // can not executeOnExecutor or the text will never finish
         waitForIt();
-        // its called twice. first time is to check if it's in the cache.
-        // second time is to get the file it created to write to it.
-        Mockito.verify(diskCache, Mockito.times(1)).put(Mockito.eq("123"), (DiskCache.Writer) anyObject());
+        Mockito.verify(diskCache, Mockito.times(1))
+                .put(Mockito.eq("1234"), (DiskCache.Writer) anyObject());
         Mockito.verify(target, Mockito.times(1)).onResult(
                 (Bitmap) any(), Mockito.eq(Mirage.Source.EXTERNAL), Mockito.eq(request));
         Assert.assertEquals(1, mockWebServer.getRequestCount());
@@ -628,27 +573,29 @@ public class BitmapTaskTest extends RobolectricTest {
     }
 
     @Test
-    public void testFastFailsOnLoadManagerError() {
+    public void testFastFailsOnLoadManagerError()  {
         Bitmap bm = Bitmap.createBitmap(600, 400, Bitmap.Config.ARGB_8888);
-        mockWebServer.enqueue(new MockResponse().setResponseCode(400).setBody("nothing"));
-        MemoryCache<String, Bitmap> memoryCache = Mockito.mock(MemoryCache.class);
+        mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(toByteArray(bm)));
+        File file = Mockito.mock(File.class);
         DiskCache diskCache = Mockito.mock(DiskCache.class);
+        Mockito.when(diskCache.get(Mockito.eq("123"))).thenReturn(file);
+        Mockito.when(diskCache.get(Mockito.eq("1234"))).thenReturn(file);
 
         Target<Bitmap> target = Mockito.mock(Target.class);
-        MirageRequest request = Mockito.mock(MirageRequest.class);
-        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-        Mockito.when(request.memoryCache()).thenReturn(memoryCache);
-        Mockito.when(request.diskCache()).thenReturn(diskCache);
-        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.RESULT);
-        Mockito.when(request.getResultKey()).thenReturn("123");
-        Mockito.when(request.getSourceKey()).thenReturn("1234");
-        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-        Mockito.when(request.target()).thenReturn(target);
+        MirageRequest request = Mirage.get(getApp())
+                .load(baseUrl.toString())
+                .diskCache(diskCache)
+                .keyMaker(new EasyKeyMaker("123", "1234"))
+                .skipReadingDiskCache(true)
+                .urlFactory(new SimpleUrlConnectionFactory())
+                .diskCacheStrategy(DiskCacheStrategy.RESULT);
+        request.into(target);
 
         LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
         LoadError loadError = Mockito.mock(LoadError.class);
         Mockito.when(loadError.isValid()).thenReturn(true);
         Mockito.when(manager.getLoadError(Mockito.anyString())).thenReturn(loadError);
+
 
         MirageTask.Callback<Bitmap> callback = new MirageTask.Callback<Bitmap>() {
             @Override
@@ -659,7 +606,6 @@ public class BitmapTaskTest extends RobolectricTest {
 
             @Override
             public void onPostExecute(MirageTask task, MirageRequest request, Bitmap bitmap) {
-                Assert.assertNull(bitmap);
                 wait.set(false);
             }
         };
@@ -677,16 +623,20 @@ public class BitmapTaskTest extends RobolectricTest {
     public void testRemovesLoadManagerErrorIfNoLongerValid() {
         Bitmap bm = Bitmap.createBitmap(600, 400, Bitmap.Config.ARGB_8888);
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody(toByteArray(bm)));
+        File file = Mockito.mock(File.class);
+        DiskCache diskCache = Mockito.mock(DiskCache.class);
+        Mockito.when(diskCache.get(Mockito.eq("123"))).thenReturn(file);
+        Mockito.when(diskCache.get(Mockito.eq("1234"))).thenReturn(file);
+
         Target<Bitmap> target = Mockito.mock(Target.class);
-        MirageRequest request = Mockito.mock(MirageRequest.class);
-        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-        Mockito.when(request.memoryCache()).thenReturn(null);
-        Mockito.when(request.diskCache()).thenReturn(null);
-        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.RESULT);
-        Mockito.when(request.getResultKey()).thenReturn("123");
-        Mockito.when(request.getSourceKey()).thenReturn("1234");
-        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-        Mockito.when(request.target()).thenReturn(target);
+        MirageRequest request = Mirage.get(getApp())
+                .load(baseUrl.toString())
+                .diskCache(diskCache)
+                .keyMaker(new EasyKeyMaker("123", "1234"))
+                .skipReadingDiskCache(true)
+                .urlFactory(new SimpleUrlConnectionFactory())
+                .diskCacheStrategy(DiskCacheStrategy.RESULT);
+        request.into(target);
 
         LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
         LoadError loadError = Mockito.mock(LoadError.class);
@@ -784,19 +734,13 @@ public class BitmapTaskTest extends RobolectricTest {
         processorList.add(processor1);
 
         Target<Bitmap> target = Mockito.mock(Target.class);
-        MirageRequest request = Mockito.mock(MirageRequest.class);
-        Mockito.when(request.urlFactory()).thenReturn(new SimpleUrlConnectionFactory());
-        Mockito.when(request.isSkipReadingDiskCache()).thenReturn(false);
-        Mockito.when(request.isSkipReadingMemoryCache()).thenReturn(false);
-        Mockito.when(request.isSkipWritingMemoryCache()).thenReturn(false);
-        Mockito.when(request.memoryCache()).thenReturn(null);
-        Mockito.when(request.diskCache()).thenReturn(null);
-        Mockito.when(request.diskCacheStrategy()).thenReturn(DiskCacheStrategy.RESULT);
-        Mockito.when(request.getResultKey()).thenReturn("123");
-        Mockito.when(request.getSourceKey()).thenReturn("1234");
-        Mockito.when(request.uri()).thenReturn(Uri.parse(baseUrl.toString()));
-        Mockito.when(request.target()).thenReturn(target);
-        Mockito.when(request.getProcessors()).thenReturn(processorList);
+        MirageRequest request = Mirage.get(getApp())
+                .load(baseUrl.toString())
+                .keyMaker(new EasyKeyMaker("123", "1234"))
+                .urlFactory(new SimpleUrlConnectionFactory())
+                .addProcessor(processor1)
+                .diskCacheStrategy(DiskCacheStrategy.RESULT);
+        request.into(target);
 
         LoadErrorManager manager = Mockito.mock(LoadErrorManager.class);
 

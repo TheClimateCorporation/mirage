@@ -514,13 +514,14 @@ public class MirageRequest {
 	 *
 	 * @param processor A processor to manipulate the image
 	 */
-	public void addProcessor(BitmapProcessor processor) {
+	public MirageRequest addProcessor(BitmapProcessor processor) {
 		synchronized (LOCK) {
 			if (this.processors == null) {
 				this.processors = Collections.synchronizedList(new ArrayList<BitmapProcessor>());
 			}
 		}
 		processors.add(processor);
+		return this;
 	}
 
 	/**
