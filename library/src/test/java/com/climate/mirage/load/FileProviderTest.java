@@ -9,7 +9,9 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLConnection;
 
 import static org.mockito.Matchers.any;
@@ -29,12 +31,13 @@ public class FileProviderTest extends RobolectricTest {
         when(request.urlFactory()).thenReturn(factory);
         FileProvider provider = new FileProvider(request);
         when(request.provider()).thenReturn(provider);
-        when(request.uri()).thenReturn(Uri.parse("http://www.sample.com/"));
+        File file = File.createTempFile("prefix", "suffix");
+        when(request.uri()).thenReturn(Uri.fromFile(file));
 
-        provider.load();
+        InputStream stream = provider.stream();
 
-        verify(request, times(1)).urlFactory();
-        verify(factory, times(1)).getConnection(any(Uri.class));
+        Assert.assertNotNull(stream);
+        verify(request, times(1)).uri();
     }
 
 }

@@ -17,7 +17,7 @@ public class FileProvider extends SavingStreamProvider {
     }
 
     @Override
-    public InputStream stream() throws IOException {
+    protected InputStream stream() throws IOException {
         File f = new File(request.uri().getPath());
         InputStream in = new FileInputStream(f);
         return in;

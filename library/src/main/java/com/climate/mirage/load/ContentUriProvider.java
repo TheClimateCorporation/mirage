@@ -25,7 +25,7 @@ public class ContentUriProvider extends SavingStreamProvider {
     }
 
     @Override
-    public InputStream stream() throws IOException {
+    protected InputStream stream() throws IOException {
         InputStream in = context.getContentResolver().openInputStream(request.uri());
         return in;
     }
