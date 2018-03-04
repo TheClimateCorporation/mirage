@@ -22,26 +22,26 @@ public class LoadErrorManager {
 		this(null);
 	}
 
-	public void addLoadError(Uri uri, LoadError error) {
+	public void addLoadError(String id, LoadError error) {
 		synchronized (errors) {
-			errors.put(uri.toString(), error);
+			errors.put(id, error);
 		}
 	}
 
-	public void addLoadError(Uri uri, Exception exception, Mirage.Source source) {
-		addLoadError(uri, loadErrorFactory.createErrorLog(uri.toString(), exception, source));
+	public void addLoadError(String id, Exception exception, Mirage.Source source) {
+		addLoadError(id, loadErrorFactory.createErrorLog(id, exception, source));
 	}
 
-	public LoadError getLoadError(Uri uri) {
+	public LoadError getLoadError(String id) {
 		synchronized (errors) {
-			LoadError error = errors.get(uri.toString());
+			LoadError error = errors.get(id);
 			return error;
 		}
 	}
 
-	public void removeLoadError(Uri uri) {
+	public void removeLoadError(String id) {
 		synchronized (errors) {
-			errors.remove(uri.toString());
+			errors.remove(id);
 		}
 	}
 

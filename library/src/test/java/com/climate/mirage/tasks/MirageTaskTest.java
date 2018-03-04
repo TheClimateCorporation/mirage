@@ -102,7 +102,7 @@ public class MirageTaskTest extends RobolectricTest {
                 (MirageTask) Mockito.any(),
                 (MirageRequest) Mockito.any());
 
-        final BitmapUrlTask task = new BitmapUrlTask(null, request, manager, callback);
+        final BitmapTask task = new BitmapTask(null, request, manager, callback);
         Mockito.when(memoryCache.get(Mockito.eq("123"))).then(new Answer<Bitmap>() {
             @Override
             public Bitmap answer(InvocationOnMock invocation) throws Throwable {

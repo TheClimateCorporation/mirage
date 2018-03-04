@@ -15,6 +15,7 @@ import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.BitmapLruCache;
 import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
+import com.climate.mirage.load.UriProvider;
 import com.climate.mirage.processors.ResizeProcessor;
 import com.climate.mirage.tasks.MirageTask;
 
@@ -112,6 +113,7 @@ public class MirageRequestTest extends RobolectricTest {
     public void testProps() {
         MirageRequest request = new MirageRequest();
         request.uri(Uri.parse("http://www.google.com/"))
+                .provider(new UriProvider(request))
                 .resize(200, 400)
                 .diskCache(Mockito.mock(DiskCache.class))
                 .diskCacheStrategy(DiskCacheStrategy.RESULT)
@@ -140,6 +142,7 @@ public class MirageRequestTest extends RobolectricTest {
 
         request = new MirageRequest();
         request.uri(Uri.parse("http://www.google.com/"))
+                .provider(new UriProvider(request))
                 .into(new ImageView(RuntimeEnvironment.application));
 
         Assert.assertEquals(Uri.parse("http://www.google.com/"), request.uri());
@@ -152,6 +155,7 @@ public class MirageRequestTest extends RobolectricTest {
 
         request = new MirageRequest();
         request.uri(Uri.parse("http://www.google.com/"))
+                .provider(new UriProvider(request))
                 .keyMaker(new SimpleKeyMaker())
                 .executor(AsyncTask.THREAD_POOL_EXECUTOR)
                 .into(new ImageView(RuntimeEnvironment.application));
@@ -228,7 +232,6 @@ public class MirageRequestTest extends RobolectricTest {
     @Test
     public void testSaveSourceFalse() {
         MirageRequest request = createRequest();
-        request.uri(Uri.parse("http://www.google.com"));
         request.resize(20, 20);
         Assert.assertFalse(request.isRequestShouldSaveSource());
 
@@ -240,6 +243,7 @@ public class MirageRequestTest extends RobolectricTest {
     private MirageRequest createRequest() {
         MirageRequest request = new MirageRequest();
         request.uri(Uri.parse("http://www.google.com"));
+        request.provider(new UriProvider(request));
         request.diskCache(getDiskCache());
         return request;
     }

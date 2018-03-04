@@ -31,16 +31,16 @@ public class LoadErrorManagerTest extends RobolectricTest {
     @Test
     public void testErrorsAreNull() throws Exception {
         LoadErrorManager manager = new LoadErrorManager();
-        LoadError error = manager.getLoadError(Uri.parse("http://www.no_error.com"));
+        LoadError error = manager.getLoadError("http://www.no_error.com");
         Assert.assertNull(error);
     }
 
     @Test
     public void testAddError() throws Exception {
         LoadErrorManager manager = new LoadErrorManager();
-        manager.addLoadError(Uri.parse("http://www.some_url.com"),
+        manager.addLoadError("http://www.some_url.com",
                 new IOException("something"), Mirage.Source.EXTERNAL);
-        LoadError error = manager.getLoadError(Uri.parse("http://www.some_url.com"));
+        LoadError error = manager.getLoadError("http://www.some_url.com");
         Assert.assertNotNull(error);
         Assert.assertTrue(error.isValid());
         Assert.assertNotNull(error.getException());
@@ -49,13 +49,13 @@ public class LoadErrorManagerTest extends RobolectricTest {
     @Test
     public void testRemoveError() throws Exception {
         LoadErrorManager manager = new LoadErrorManager();
-        manager.addLoadError(Uri.parse("http://www.some_url.com"),
+        manager.addLoadError("http://www.some_url.com",
                 new IOException("something"), Mirage.Source.EXTERNAL);
-        LoadError error = manager.getLoadError(Uri.parse("http://www.some_url.com"));
+        LoadError error = manager.getLoadError("http://www.some_url.com");
         Assert.assertNotNull(error);
 
-        manager.removeLoadError(Uri.parse("http://www.some_url.com"));
-        error = manager.getLoadError(Uri.parse("http://www.some_url.com"));
+        manager.removeLoadError("http://www.some_url.com");
+        error = manager.getLoadError("http://www.some_url.com");
         Assert.assertNull(error);
     }
 
@@ -63,7 +63,7 @@ public class LoadErrorManagerTest extends RobolectricTest {
     public void testOverloadedConstructor() throws Exception {
         LoadErrorFactory factory = Mockito.mock(LoadErrorFactory.class);
         LoadErrorManager manager = new LoadErrorManager(factory);
-        LoadError error = manager.getLoadError(Uri.parse("http://www.no_error.com"));
+        LoadError error = manager.getLoadError("http://www.no_error.com");
         Assert.assertNull(error);
     }
 

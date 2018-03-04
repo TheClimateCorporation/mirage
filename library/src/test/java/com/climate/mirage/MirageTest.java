@@ -10,6 +10,7 @@ import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.BitmapLruCache;
 import com.climate.mirage.cache.memory.MemoryCache;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
+import com.climate.mirage.load.UriProvider;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.shadows.CancelAsyncTaskShadow;
 import com.climate.mirage.shadows.NoExecuteAsyncTaskShadow;
@@ -250,6 +251,7 @@ public class MirageTest extends RobolectricTest {
         Mockito.when(request.getResultKey()).thenReturn("123");
         Mockito.when(request.getSourceKey()).thenReturn("1234");
         Mockito.when(request.uri()).thenReturn(Uri.parse("http://www.some_url.com/bleh.jpg"));
+        Mockito.when(request.provider()).thenReturn(new UriProvider(request));
         Mockito.when(request.executor()).thenReturn(mirage.getDefaultExecutor());
 
         ImageViewTarget ivt = new ImageViewTarget(request,
@@ -275,6 +277,7 @@ public class MirageTest extends RobolectricTest {
         Mockito.when(request.getResultKey()).thenReturn("123");
         Mockito.when(request.getSourceKey()).thenReturn("1234");
         Mockito.when(request.uri()).thenReturn(Uri.parse("http://www.some_url.com/bleh.jpg"));
+        Mockito.when(request.provider()).thenReturn(new UriProvider(request));
         Mockito.when(request.executor()).thenReturn(mirage.getDefaultExecutor());
         Mockito.when(request.target()).thenReturn(target2);
         task = mirage.go(request);
