@@ -216,8 +216,7 @@ public class MirageTest extends RobolectricTest {
                 .into(new ImageView(getApp()))
                 .go();
 
-        // lifecycle is dead. there should be no task created.
-        Assert.assertNull(task);
+        Assert.assertNull("lifecycle is destroyed. there should be no task created", task);
     }
 
 

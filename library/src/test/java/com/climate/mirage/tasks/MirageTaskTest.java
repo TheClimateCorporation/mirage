@@ -67,46 +67,6 @@ public class MirageTaskTest extends RobolectricTest {
         mockWebServer = null;
     }
 
-    private static class TestLifecycleOwner implements LifecycleOwner {
-        LifecycleRegistry registry;
-        private TestLifecycleOwner() {
-            registry = new LifecycleRegistry(this);
-            registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
-        }
-
-        @Override
-        public Lifecycle getLifecycle() {
-            return registry;
-        }
-    }
-
-    @Test
-    public void testCancels_onLifecycle() {
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-
-        TestLifecycleOwner owner1 = new TestLifecycleOwner();
-        MirageRequest request1 = new MirageRequest();
-        request1.lifecycle(owner1.getLifecycle());
-        MirageTask.Callback<String> callback1 = Mockito.mock(MirageTask.Callback.class);
-        WaitTask t1 = new WaitTask(request1, callback1);
-
-        TestLifecycleOwner owner2 = new TestLifecycleOwner();
-        MirageRequest request2 = new MirageRequest();
-        request2.lifecycle(owner2.getLifecycle());
-        MirageTask.Callback<String> callback2 = Mockito.mock(MirageTask.Callback.class);
-        WaitTask t2 = new WaitTask(request2, callback2);
-
-        t1.executeOnExecutor(executor);
-        t2.executeOnExecutor(executor);
-
-        owner2.registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
-        owner1.registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
-        Assert.assertEquals(Lifecycle.State.DESTROYED, owner1.registry.getCurrentState());
-
-        Assert.assertTrue(t1.isCancelled());
-        Assert.assertTrue(t2.isCancelled());
-    }
-
     @Test
     public void testCancels() {
         Bitmap bm = Bitmap.createBitmap(600, 400, Bitmap.Config.ARGB_8888);
