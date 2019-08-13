@@ -147,40 +147,5 @@ public class MirageTaskTest extends RobolectricTest {
 //        while (wait.get() && (System.currentTimeMillis() - t < 1000)) {}
         while (wait.get()) {}
     }
-
-    private static class WaitTask extends MirageTask<Void, Void, String> {
-        public final AtomicBoolean waiter = new AtomicBoolean(true);
-
-        public boolean wasCanceled = false;
-
-        public WaitTask(MirageRequest request, Callback<String> callback) {
-            super(request, callback);
-        }
-
-        @Override
-        public String doTask(Void... voids) throws MirageIOException, InterruptedIOException {
-            while(waiter.get()) {
-                // do nothing
-            }
-            return "done";
-        }
-
-        @Override
-        protected void onCancelled(String s) {
-            super.onCancelled(s);
-            waiter.set(false);
-            wasCanceled = true;
-        }
-
-        @Override
-        protected void onPostSuccess(String bitmap) {
-            wasCanceled = false;
-        }
-
-        @Override
-        protected void onPostError(Exception exception) {
-            wasCanceled = false;
-        }
-    }
-
+    
 }
