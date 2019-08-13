@@ -2,6 +2,7 @@ package com.climate.mirage;
 
 import android.app.Activity;
 import android.app.Application;
+import android.arch.lifecycle.Lifecycle;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -271,6 +272,12 @@ public class Mirage {
         if (task == null || task.isCancelled()) {
             return null;
         }
+
+        // exit early if the lifecycle is not active.
+        Lifecycle lifecycle = request.lifecycle();
+        if (lifecycle != null && lifecycle.getCurrentState() == Lifecycle.State.DESTROYED) {
+        	return null;
+		}
 
         // TODO: clean up this duplicate
         if (request.memoryCache() == null) request.memoryCache(defaultMemoryCache);

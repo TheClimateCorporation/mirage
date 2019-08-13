@@ -1,5 +1,8 @@
 package com.climate.mirage.tasks;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -21,14 +24,25 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 	private Callback<Result> callback;
 	private MirageRequest request;
     private boolean didInternalCancel = false;
-
+    private Lifecycle lifecycle;
+	private LifecycleObserver lifecycleObserver;
 
 	public MirageTask(MirageRequest request, Callback<Result> callback) {
 		this.request = request;
 		this.callback = callback;
+		this.lifecycle = request.lifecycle();
+		if (lifecycle != null) {
+			lifecycleObserver = new LifecycleObserver() {
+				@OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+				public void onDestroy() {
+					mirageCancel();
+				}
+			};
+			lifecycle.addObserver(lifecycleObserver);
+		}
 	}
 
-    @Override
+	@Override
 	protected Result doInBackground(Params... params) {
 		try {
 			return doTask(params);
@@ -67,6 +81,7 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
 	@Override
 	protected void onPostExecute(Result result) {
 		super.onPostExecute(result);
+		removeLifecycleObserver();
 		if (isCancelled()) return;
 		if (exception != null) {
 			onPostError(exception);
@@ -86,5 +101,14 @@ abstract public class MirageTask<Params, Progress, Result>  extends AsyncTask<Pa
         didInternalCancel = true;
         if (request.target() != null) request.target().onCancel();
         callback.onCancel(this, request);
+		removeLifecycleObserver();
     }
+
+    private void removeLifecycleObserver() {
+    	if (lifecycle != null) {
+    		lifecycle.removeObserver(lifecycleObserver);
+		}
+    	lifecycle = null;
+    	lifecycleObserver = null;
+	}
 }

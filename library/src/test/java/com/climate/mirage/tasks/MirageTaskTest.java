@@ -1,5 +1,9 @@
 package com.climate.mirage.tasks;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
@@ -10,6 +14,7 @@ import com.climate.mirage.Mirage;
 import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
+import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.targets.Target;
@@ -29,7 +34,11 @@ import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MirageTaskTest extends RobolectricTest {
@@ -56,6 +65,46 @@ public class MirageTaskTest extends RobolectricTest {
         }
         baseUrl = null;
         mockWebServer = null;
+    }
+
+    private static class TestLifecycleOwner implements LifecycleOwner {
+        LifecycleRegistry registry;
+        private TestLifecycleOwner() {
+            registry = new LifecycleRegistry(this);
+            registry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
+        }
+
+        @Override
+        public Lifecycle getLifecycle() {
+            return registry;
+        }
+    }
+
+    @Test
+    public void testCancels_onLifecycle() {
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        TestLifecycleOwner owner1 = new TestLifecycleOwner();
+        MirageRequest request1 = new MirageRequest();
+        request1.lifecycle(owner1.getLifecycle());
+        MirageTask.Callback<String> callback1 = Mockito.mock(MirageTask.Callback.class);
+        WaitTask t1 = new WaitTask(request1, callback1);
+
+        TestLifecycleOwner owner2 = new TestLifecycleOwner();
+        MirageRequest request2 = new MirageRequest();
+        request2.lifecycle(owner2.getLifecycle());
+        MirageTask.Callback<String> callback2 = Mockito.mock(MirageTask.Callback.class);
+        WaitTask t2 = new WaitTask(request2, callback2);
+
+        t1.executeOnExecutor(executor);
+        t2.executeOnExecutor(executor);
+
+        owner2.registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+        owner1.registry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+        Assert.assertEquals(Lifecycle.State.DESTROYED, owner1.registry.getCurrentState());
+
+        Assert.assertTrue(t1.isCancelled());
+        Assert.assertTrue(t2.isCancelled());
     }
 
     @Test
@@ -137,6 +186,41 @@ public class MirageTaskTest extends RobolectricTest {
         long t = System.currentTimeMillis();
 //        while (wait.get() && (System.currentTimeMillis() - t < 1000)) {}
         while (wait.get()) {}
+    }
+
+    private static class WaitTask extends MirageTask<Void, Void, String> {
+        public final AtomicBoolean waiter = new AtomicBoolean(true);
+
+        public boolean wasCanceled = false;
+
+        public WaitTask(MirageRequest request, Callback<String> callback) {
+            super(request, callback);
+        }
+
+        @Override
+        public String doTask(Void... voids) throws MirageIOException, InterruptedIOException {
+            while(waiter.get()) {
+                // do nothing
+            }
+            return "done";
+        }
+
+        @Override
+        protected void onCancelled(String s) {
+            super.onCancelled(s);
+            waiter.set(false);
+            wasCanceled = true;
+        }
+
+        @Override
+        protected void onPostSuccess(String bitmap) {
+            wasCanceled = false;
+        }
+
+        @Override
+        protected void onPostError(Exception exception) {
+            wasCanceled = false;
+        }
     }
 
 }
