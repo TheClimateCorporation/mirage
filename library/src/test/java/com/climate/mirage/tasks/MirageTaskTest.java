@@ -1,20 +1,14 @@
 package com.climate.mirage.tasks;
 
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.LifecycleOwner;
-import android.arch.lifecycle.LifecycleRegistry;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
 
-import com.climate.mirage.BuildConfig;
 import com.climate.mirage.LoadErrorManager;
 import com.climate.mirage.Mirage;
 import com.climate.mirage.RobolectricTest;
 import com.climate.mirage.cache.disk.DiskCacheStrategy;
 import com.climate.mirage.cache.memory.MemoryCache;
-import com.climate.mirage.exceptions.MirageIOException;
 import com.climate.mirage.load.SimpleUrlConnectionFactory;
 import com.climate.mirage.requests.MirageRequest;
 import com.climate.mirage.targets.Target;
@@ -26,19 +20,13 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.net.URL;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MirageTaskTest extends RobolectricTest {
@@ -147,5 +135,5 @@ public class MirageTaskTest extends RobolectricTest {
 //        while (wait.get() && (System.currentTimeMillis() - t < 1000)) {}
         while (wait.get()) {}
     }
-    
+
 }
