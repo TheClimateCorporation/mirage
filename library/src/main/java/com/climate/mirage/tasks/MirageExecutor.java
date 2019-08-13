@@ -31,4 +31,10 @@ public class MirageExecutor extends ThreadPoolExecutor {
 				TimeUnit.SECONDS, sPoolWorkQueue, threadFactory);
 	}
 
+	@Override
+	public String toString() {
+		String org = super.toString();
+		// TODO: list out all the running tasks
+		return org;
+	}
 }

@@ -1,5 +1,7 @@
 package com.climate.mirage.requests;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -70,6 +72,7 @@ public class MirageRequest {
     private int resizeTargetDimen = -1;
     private boolean resizeSampleUndershoot = false;
 	private BitmapProvider bitmapProvider;
+	private Lifecycle lifecycle;
 
 
 	/**
@@ -107,6 +110,7 @@ public class MirageRequest {
 			resizeProcessor.setDimensions(0, 0, ResizeProcessor.STRATEGY_SCALE_FREE);
 		}
         bitmapProvider = null;
+		lifecycle = null;
 	}
 
 	@Nullable
@@ -124,6 +128,21 @@ public class MirageRequest {
 	public MirageRequest uri(Uri uri) {
 		this.uri = uri;
 		return this;
+	}
+
+	/**
+	 * If the lifecycle is different than the activity, you can add a
+	 * custom one. If it's the activity, it's automatically taken care of.
+	 * @return class instance to daisy chain
+	 */
+	public MirageRequest lifecycle(Lifecycle lifecycle) {
+		this.lifecycle = lifecycle;
+		return this;
+	}
+
+	@Nullable
+	public Lifecycle lifecycle() {
+		return lifecycle;
 	}
 
 	public MirageRequest provider(BitmapProvider provider) {
@@ -189,8 +208,6 @@ public class MirageRequest {
 		this.diskCacheStrategy = strategy;
 		return this;
 	}
-
-
 
 	public boolean isSkipReadingDiskCache() {
 		return skipReadingDiskCache;

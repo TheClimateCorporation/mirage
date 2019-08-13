@@ -1,5 +1,8 @@
 package com.climate.mirage;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -202,6 +205,21 @@ public class MirageTest extends RobolectricTest {
         mirage.removeFromCache(request);
     }
 
+    @Test
+    public void testLifecycleExitsEarly() {
+        MyLifecycleOwner owner = new MyLifecycleOwner();
+        owner.registry.markState(Lifecycle.State.DESTROYED);
+
+        MirageTask task = Mirage.get(getApp())
+                .load("http://www.mock-url.com/something.jpg")
+                .lifecycle(owner.getLifecycle())
+                .into(new ImageView(getApp()))
+                .go();
+
+        Assert.assertNull("lifecycle is destroyed. there should be no task created", task);
+    }
+
+
     @Config(shadows = NoExecuteAsyncTaskShadow.class, constants = BuildConfig.class)
     @Test
     public void testCancelRunningTask_byView() throws Exception {
@@ -212,7 +230,7 @@ public class MirageTest extends RobolectricTest {
                 .go();
         Field field = Mirage.class.getDeclaredField("runningRequests");
         field.setAccessible(true);
-        Map<Object, MirageTask> map = (Map<Object, MirageTask> )field.get(mirage);
+        Map<Object, MirageTask> map = (Map<Object, MirageTask>)field.get(mirage);
         Assert.assertEquals(1, map.size());
         Assert.assertFalse(task.isCancelled());
         mirage.cancelRequest(imageView);
@@ -319,6 +337,19 @@ public class MirageTest extends RobolectricTest {
     public void testRemovesFromQueueAfterExecute_cancel() throws Exception {
         testRemovesFromQueueAfterExecute();
         testRemovesFromQueueAfterExecute_downloadOnly();
+    }
+
+    private static class MyLifecycleOwner implements LifecycleOwner {
+        private LifecycleRegistry registry;
+        private MyLifecycleOwner() {
+            registry = new LifecycleRegistry(this);
+            registry.markState(Lifecycle.State.RESUMED);
+        }
+
+        @Override
+        public Lifecycle getLifecycle() {
+            return registry;
+        }
     }
 
 }
