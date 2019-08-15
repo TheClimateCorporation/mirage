@@ -246,6 +246,7 @@ public class MirageTest extends RobolectricTest {
         ImageViewTarget ivt = new ImageViewTarget(request,
                 new ImageView(RuntimeEnvironment.application));
         MirageTask task = request.into(ivt).go();
+        Assert.assertNotNull(task);
 
         Field field = Mirage.class.getDeclaredField("runningRequests");
         field.setAccessible(true);
