@@ -3,10 +3,10 @@ package com.climate.mirage.load;
 import android.net.Uri;
 
 import java.io.IOException;
-import java.net.URLConnection;
+import java.io.InputStream;
 
 public interface UrlFactory {
 
-	URLConnection getConnection(Uri uri) throws IOException;
+	InputStream getStream(Uri uri) throws IOException;
 
 }

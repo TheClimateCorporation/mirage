@@ -18,7 +18,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
 import java.util.List;
 
 public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
@@ -149,8 +148,8 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 	private void streamIntoFile(String key) throws IOException {
 		InputStream in = null;
 		try {
-			URLConnection connection = getConnection();
-			in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);
+			InputStream inputStream = getStream();
+			in = new BufferedInputStream(inputStream, IO_BUFFER_SIZE);
 			request.diskCache().put(key, new InputStreamWriter(in));
 		} finally {
 			IOUtils.close(in);
@@ -164,8 +163,8 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
             if (request.isInSampleSizeDynamic()) {
                 BitmapFactory.Options opts = new BitmapFactory.Options();
                 opts.inJustDecodeBounds = true;
-                URLConnection connection = getConnection();
-                in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);
+				InputStream inputStream = getStream();
+                in = new BufferedInputStream(inputStream, IO_BUFFER_SIZE);
                 BitmapFactory.decodeStream(in, null, opts);
                 int sampleSize = determineSampleSize(opts);
                 request.inSampleSize(sampleSize);
@@ -175,8 +174,8 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
         }
 
 		try {
-			URLConnection connection = getConnection();
-			in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);
+			InputStream inputStream = getStream();
+			in = new BufferedInputStream(inputStream, IO_BUFFER_SIZE);
 			Bitmap bitmap = BitmapFactory.decodeStream(in, request.outPadding(), request.options());
 			return bitmap;
 		} finally {
@@ -196,8 +195,8 @@ public class BitmapDownloadTask extends MirageTask<Void, Void, File> {
 		return bitmap;
 	}
 
-	private URLConnection getConnection() throws IOException {
-		return request.urlFactory().getConnection(request.uri());
+	private InputStream getStream() throws IOException {
+		return request.urlFactory().getStream(request.uri());
 	}
 
 	private void putResultInDiskCache(Bitmap bitmap) {

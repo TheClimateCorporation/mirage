@@ -19,12 +19,11 @@ public class UriProvider extends SavingStreamProvider {
 
     @Override
     protected InputStream stream() throws IOException {
-        URLConnection connection = getConnection();
-        InputStream in = new BufferedInputStream(connection.getInputStream(), IO_BUFFER_SIZE);
+        InputStream in = new BufferedInputStream(getInputStream(), IO_BUFFER_SIZE);
         return in;
     }
 
-    private URLConnection getConnection() throws IOException {
-        return request.urlFactory().getConnection(request.uri());
+    private InputStream getInputStream() throws IOException {
+        return request.urlFactory().getStream(request.uri());
     }
 }

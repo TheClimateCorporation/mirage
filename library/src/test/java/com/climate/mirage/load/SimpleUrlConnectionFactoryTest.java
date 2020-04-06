@@ -2,7 +2,6 @@ package com.climate.mirage.load;
 
 import android.net.Uri;
 
-import com.climate.mirage.BuildConfig;
 import com.climate.mirage.RobolectricTest;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -13,8 +12,6 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.annotation.Config;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -46,7 +43,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("yay!"));
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
-        HttpURLConnection conn = (HttpURLConnection)urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+        HttpURLConnection conn = (HttpURLConnection)urlFactory.getStream(Uri.parse(baseUrl.toString()));
         Assert.assertEquals(200, conn.getResponseCode());
     }
 
@@ -56,7 +53,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
         try {
-            HttpURLConnection conn = (HttpURLConnection) urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+            HttpURLConnection conn = (HttpURLConnection) urlFactory.getStream(Uri.parse(baseUrl.toString()));
             Assert.fail("Can not have a -1 status code. This should have failed");
         } catch (IOException e) {
             Assert.assertNotNull(e);
@@ -69,7 +66,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
         try {
-            HttpURLConnection conn = (HttpURLConnection) urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+            HttpURLConnection conn = (HttpURLConnection) urlFactory.getStream(Uri.parse(baseUrl.toString()));
             Assert.fail("Can not have an unknown status code. This should have failed");
         } catch (IOException e) {
             Assert.assertNotNull(e);
@@ -83,7 +80,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
         mockWebServer.enqueue(new MockResponse().setResponseCode(200).setBody("yay!"));
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
-        HttpURLConnection conn = (HttpURLConnection)urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+        HttpURLConnection conn = (HttpURLConnection)urlFactory.getStream(Uri.parse(baseUrl.toString()));
         Assert.assertEquals(200, conn.getResponseCode());
         Assert.assertEquals(2, mockWebServer.getRequestCount());
     }
@@ -98,7 +95,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
         try {
-            HttpURLConnection conn = (HttpURLConnection) urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+            HttpURLConnection conn = (HttpURLConnection) urlFactory.getStream(Uri.parse(baseUrl.toString()));
             Assert.fail("Redirect to the same URL should fail");
         } catch (IOException e) {
             Assert.assertNotNull(e);
@@ -113,7 +110,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
         try {
-            HttpURLConnection conn = (HttpURLConnection) urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+            HttpURLConnection conn = (HttpURLConnection) urlFactory.getStream(Uri.parse(baseUrl.toString()));
             Assert.fail("Redirect to a blank url");
         } catch (IOException e) {
             Assert.assertNotNull(e);
@@ -138,7 +135,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
 
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory();
         try {
-            HttpURLConnection conn = (HttpURLConnection) urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+            HttpURLConnection conn = (HttpURLConnection) urlFactory.getStream(Uri.parse(baseUrl.toString()));
             Assert.fail("This should have thrown an IOException");
         } catch (IOException e) {
             Assert.assertNotNull(e);
@@ -154,7 +151,7 @@ public class SimpleUrlConnectionFactoryTest extends RobolectricTest {
         headers.put("other_header", "foo");
         headers.put("other_header2", "bar");
         SimpleUrlConnectionFactory urlFactory = new SimpleUrlConnectionFactory(headers);
-        HttpURLConnection conn = (HttpURLConnection) urlFactory.getConnection(Uri.parse(baseUrl.toString()));
+        HttpURLConnection conn = (HttpURLConnection) urlFactory.getStream(Uri.parse(baseUrl.toString()));
         Assert.assertEquals(200, conn.getResponseCode());
 
         RecordedRequest request = mockWebServer.takeRequest();
