@@ -11,6 +11,7 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLConnection;
 
 import static org.mockito.Matchers.any;
@@ -28,8 +29,8 @@ public class ContentUriProviderTest extends RobolectricTest {
 
         MirageRequest request = mock(MirageRequest.class);
         UrlFactory factory = mock(UrlFactory.class);
-        URLConnection conn = mock(URLConnection.class);
-        when(factory.getConnection(any(Uri.class))).thenReturn(conn);
+        InputStream inputStream = mock(InputStream.class);
+        when(factory.getStream(any(Uri.class))).thenReturn(inputStream);
         when(request.urlFactory()).thenReturn(factory);
         ContentUriProvider provider = new ContentUriProvider(context, request);
         when(request.provider()).thenReturn(provider);
