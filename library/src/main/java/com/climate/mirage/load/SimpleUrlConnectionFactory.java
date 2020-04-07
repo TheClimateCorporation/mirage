@@ -4,9 +4,9 @@ import android.net.Uri;
 import android.text.TextUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -24,12 +24,11 @@ public class SimpleUrlConnectionFactory implements UrlFactory {
 		this.requestProps = requestProps;
 	}
 
-	@Override
-	public URLConnection getConnection(Uri uri) throws IOException {
+	public InputStream getStream(Uri uri) throws IOException {
 		return createConnection(uri, null, 0);
 	}
 
-	private URLConnection createConnection(Uri uri, Uri lastUri, int numRedirects) throws IOException {
+	private InputStream createConnection(Uri uri, Uri lastUri, int numRedirects) throws IOException {
 		if (numRedirects >= MAX_REDIRECTS) {
 			throw new IOException("Max number of directs");
 		} else if (lastUri != null && uri.toString().equals(lastUri.toString())) {
@@ -59,7 +58,7 @@ public class SimpleUrlConnectionFactory implements UrlFactory {
 		conn.connect();
 		final int statusCode = conn.getResponseCode();
 		if (statusCode / 100 == 2) {
-			return conn;
+			return conn.getInputStream();
 		} else if (statusCode / 100 == 3) {
 			String redirectUrlString = conn.getHeaderField("Location");
 			if (TextUtils.isEmpty(redirectUrlString)) {

@@ -26,8 +26,8 @@ public class FileProviderTest extends RobolectricTest {
     public void testLoads() throws IOException {
         MirageRequest request = mock(MirageRequest.class);
         UrlFactory factory = mock(UrlFactory.class);
-        URLConnection conn = mock(URLConnection.class);
-        when(factory.getConnection(any(Uri.class))).thenReturn(conn);
+        InputStream inputStream = mock(InputStream.class);
+        when(factory.getStream(any(Uri.class))).thenReturn(inputStream);
         when(request.urlFactory()).thenReturn(factory);
         FileProvider provider = new FileProvider(request);
         when(request.provider()).thenReturn(provider);

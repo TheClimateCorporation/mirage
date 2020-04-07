@@ -33,8 +33,8 @@ public class SavingStreamProviderTest extends RobolectricTest {
     public void testLoads_doesNotSaveSource() throws IOException {
         MirageRequest request = mock(MirageRequest.class);
         UrlFactory factory = mock(UrlFactory.class);
-        URLConnection conn = mock(URLConnection.class);
-        when(factory.getConnection(any(Uri.class))).thenReturn(conn);
+        InputStream inputStream = mock(InputStream.class);
+        when(factory.getStream(any(Uri.class))).thenReturn(inputStream);
         when(request.urlFactory()).thenReturn(factory);
         when(request.uri()).thenReturn(Uri.parse("http://www.sample.com/"));
 
@@ -66,8 +66,8 @@ public class SavingStreamProviderTest extends RobolectricTest {
     public void testLoads_savesSource() throws IOException {
         MirageRequest request = mock(MirageRequest.class);
         UrlFactory factory = mock(UrlFactory.class);
-        URLConnection conn = mock(URLConnection.class);
-        when(factory.getConnection(any(Uri.class))).thenReturn(conn);
+        InputStream inputStream = mock(InputStream.class);
+        when(factory.getStream(any(Uri.class))).thenReturn(inputStream);
         when(request.urlFactory()).thenReturn(factory);
         when(request.uri()).thenReturn(Uri.parse("http://www.sample.com/"));
         when(request.isRequestShouldSaveSource()).thenReturn(true);
@@ -101,8 +101,8 @@ public class SavingStreamProviderTest extends RobolectricTest {
     public void testUsesBitmapOptions() throws IOException {
         MirageRequest request = mock(MirageRequest.class);
         UrlFactory factory = mock(UrlFactory.class);
-        URLConnection conn = mock(URLConnection.class);
-        when(factory.getConnection(any(Uri.class))).thenReturn(conn);
+        InputStream inputStream = mock(InputStream.class);
+        when(factory.getStream(any(Uri.class))).thenReturn(inputStream);
         when(request.urlFactory()).thenReturn(factory);
         when(request.uri()).thenReturn(Uri.parse("http://www.sample.com/"));
         when(request.isRequestShouldSaveSource()).thenReturn(true);
