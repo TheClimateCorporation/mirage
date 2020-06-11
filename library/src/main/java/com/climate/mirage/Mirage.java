@@ -343,8 +343,12 @@ public class Mirage {
 
         MirageTask<Void, Void, Bitmap> task = createGoTask(request);
         if (task == null) return null;
-		Bitmap bitmap = task.doTask();
-		requestObjectPool.recycle(request);
+        Bitmap bitmap;
+        try {
+        	bitmap = task.doTask();
+		} finally {
+			requestObjectPool.recycle(request);
+		}
 		return bitmap;
 	}
 
